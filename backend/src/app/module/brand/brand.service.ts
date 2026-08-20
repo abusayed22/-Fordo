@@ -10,13 +10,34 @@ const createBrand = async(payload:Brand):Promise<Brand> => {
     return brand;
 }
 
-const brandFetch = async() => {
+const brandFetch = async() :Promise<Brand[]>=> {
     const brand = await prisma.brand.findMany({
         // where:{}
     })
     return brand;
 }
 
+const brandDelete = async(id:string) => {
+    const brand = await prisma.brand.delete({
+        where: {
+            id
+        }
+    })
+    return brand;
+}
+const brandUpdate = async(id:string,payload:Partial<Brand>) => {
+    const {name} = payload
+    const brand = await prisma.brand.update({
+        where: {
+            id
+        },
+        data:{
+                name
+            }
+    })
+    return brand;
+}
 
 
-export const BrandService = {createBrand,brandFetch};
+
+export const BrandService = {createBrand,brandFetch,brandDelete,brandUpdate};
