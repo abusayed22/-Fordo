@@ -1,0 +1,327 @@
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------- model data
+model User {
+  id            String   @id @default(uuid(7))
+  name          String?
+  phone         String   @unique
+  email         String?  @unique
+  emailVerified Boolean  @default(false)
+  avatar        String?
+  role          UserRole @default(CUSTOMER)
+  isDeleted     Boolean  @default(false)
+  isBlocked     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  addresses      Address[]
+  orders         Order[]
+  manualOrders    Order[]   @relation("ManualOrders")
+  reviews        Review[]
+  wishlist Wishlist[]
+
+  // @index
+  @@map("users")
+}
+
+model Address {
+  id             String  @id @default(uuid(7))
+  userId         String
+  user           User    @relation(fields: [userId], references: [id])
+  deliveryZoneId String
+  addressLine    String
+  contactPhone   String
+  isDefault      Boolean @default(false)
+
+  order Order[]
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Category {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  logo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+  // @index
+
+  @@map("brands")
+}
+
+model Product {
+  id              String        @id @default(uuid(7))
+  categoryId      String
+  brandId         String?
+  title           String
+  slug            String        @unique
+  description     String?
+  costPrice       Float
+  originalPrice   Float 
+  sellingPrice    Float 
+  isDiscounted    Boolean       @default(false)
+  discountType    DiscountType? 
+  discountValue   Float?        @default(0.0) 
+  discountExpires DateTime?
+  stock           Int           @default(0)
+  unit            ProductUnit   
+  unitValue       Float?
+  isAvailable     Boolean       @default(true)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  category   Category       @relation(fields: [categoryId], references: [id])
+  brand      Brand?         @relation(fields: [brandId], references: [id])
+  images     ProductImage[]
+  orderItems OrderItem[]    
+  review Review[]
+  wishlist Wishlist[]
+  purchases     Purchase[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@map("products")
+}
+
+model Purchase {
+  id           String   @id @default(uuid())
+  productId    String
+  quantity     Float    // কতটুকু কিনলেন (যেমন: ৪০ কেজি)
+  unitCost     Float    // প্রতি ইউনিটের কেনা দাম (যেমন: ৭৪ টাকা)
+  totalCost    Float    // মোট বিল (quantity * unitCost)
+  supplierName String?  // যেমন: "মেসার্স রহিম রাইস মিল"
+  invoiceNo    String?  // ক্রয়ের ভাউচার/মেমো নাম্বার
+  purchaseDate DateTime @default(now())
+
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([purchaseDate])
+  @@map("purchases")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  
+  // Cloudinary ফিল্ডসমূহ
+  url       String   // Cloudinary secure_url (ইমেজ ডিসপ্লে করার জন্য)
+  publicId  String   // Cloudinary public_id (ছবি ডিলিট/আপডেট করতে লাগবে)
+  
+  isPrimary Boolean  @default(false) // প্রধান থাম্বনেইল হিসেবে চিহ্নিত করতে
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+
+model Order {
+  id              String        @id @default(uuid(7))
+  orderNumber     String        @unique 
+  userId          String
+  addressId       String
+  subTotal        Float         // আইটেমগুলোর মোট দাম
+  deliveryFee     Float         @default(0.0)
+  discountAmount  Float         @default(0.0) // কুপন বা স্পেশাল ছাড়
+  totalAmount     Float         // কাস্টমার যা পে করবে (subTotal + deliveryFee - discountAmount)
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentGateway @default(COD)
+  note            String?       
+  deliveryDate    DateTime?     
+  isManual        Boolean   @default(false) // অর্ডারটি কি অনলাইন নাকি ম্যানুয়াল?
+  createdById     String?   // কোন স্টাফ বা ডেলিভারি ম্যান এটি তৈরি করেছে
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdBy       User?     @relation("ManualOrders", fields: [createdById], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address         Address       @relation(fields: [addressId], references: [id])
+  orderItems      OrderItem[]
+  // @@index([userId])
+  // @@index([status])
+  // @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid(7))
+  orderId     String
+  productId   String
+  quantity    Float    // যেমন: ১ প্যাকেট হলে 1.0, হাফ কেজি হলে 0.5
+  costPrice   Float
+  unitPrice   Float    // অর্ডার করার মুহূর্তের প্রতি ইউনিট/কেজির দাম
+  totalPrice  Float    // quantity * unitPrice
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+  // @@index([orderId])
+  // @@index([productId])
+  // @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  rating    Int?     // কাস্টমার ১-৫ রেটিং দেবে, রিপ্লাইয়ের ক্ষেত্রে এটি null থাকবে
+  comment   String   // রিভিউ বা রিপ্লাই টেক্সট
+  // ==========================================
+  // REPLY SYSTEM (Self-Relation)
+  // ==========================================
+  parentId  String?  // মূল রিভিউ হলে null, রিপ্লাই হলে মূল রিভিউয়ের id থাকবে
+  parent    Review?  @relation("ReviewReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Review[] @relation("ReviewReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // @@index([productId])
+  // @@index([parentId])
+  // @@map("reviews")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // একজন ইউজার একটি প্রোডাক্ট একবারই উইশলিস্টে যোগ করতে পারবে
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("wishlists")
+}
+
+model Expense {
+  id          String      @id @default(uuid())
+  title       String      // যেমন: "আগস্ট মাসের প্যাকেজিং ব্যাগ কেনা"
+  amount      Float       // খরচের পরিমাণ
+  type        ExpenseType @default(OTHERS)
+  note        String?
+  expenseDate DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+
+  @@index([expenseDate])
+  @@index([type])
+  @@map("expenses")
+}
+
+
+
+
+//---------------- enum data 
+enum UserRole {
+  CUSTOMER
+  MANAGER
+  ADMIN
+  VENDOR
+  DELIVERY_MAN
+  WAREHOUSE_MANAGER
+  MANUAL_ORDER_ENTRY
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentGateway {
+  COD
+  BKASH
+  NAGAD
+  SSLCOMMERZ
+  AAMARPAY
+  STRIPE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum InventoryAction {
+  STOCK_IN
+  STOCK_OUT
+  ORDER_PLACED
+  ORDER_CANCELLED
+  RETURN_RECEIVED
+  DAMAGED
+}
+
+enum ProductUnit {
+  // ওজন (Weight)
+  KG 
+  GM //gram
+  MG // milligram
+
+  // তরল বা ভলিউম (Liquid/Volume)
+  LITER
+  ML
+
+  // গণনাযোগ্য একক (Count / Pieces)
+  PIECE
+  PACKET
+  BOX
+  DOZEN
+  PAIR
+  BUNDLE
+  BAG
+  BOTTLE
+  CAN
+}
+
+enum ExpenseType {
+  RENT              // দোকান/অফিস ভাড়া
+  SALARY            // স্টাফদের বেতন
+  UTILITY           // বিদ্যুৎ, ইন্টারনেট বিল
+  PACKAGING         // পলিথিন, বক্স, টেপ
+  MARKETING         // ফেসবুক বুস্টিং বা অ্যাড
+  DELIVERY_CHARGE   // থার্ড পার্টি কুরিয়ার চার্জ
+  DAMAGED_PRODUCT   // নষ্ট হওয়া মালের ক্ষতি
+  OTHERS
+}
+
+
