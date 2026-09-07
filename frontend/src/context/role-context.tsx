@@ -22,6 +22,7 @@ export interface RoleContextType {
   isWarehouseManager: boolean;
   isManualOrderEntry: boolean;
   hasAdminOrManager: boolean;
+  hasManagerAccess: boolean;
   canAccessRoute: (path: string) => boolean;
   roleTitle: string;
   roleBadgeColor: string;
@@ -38,6 +39,7 @@ const defaultRoleContext: RoleContextType = {
   isWarehouseManager: false,
   isManualOrderEntry: false,
   hasAdminOrManager: true,
+  hasManagerAccess: true,
   canAccessRoute: () => true,
   roleTitle: "Super Admin",
   roleBadgeColor: "#10B981",
@@ -89,6 +91,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const isWarehouseManager = role === "WAREHOUSE_MANAGER";
   const isManualOrderEntry = role === "MANUAL_ORDER_ENTRY";
   const hasAdminOrManager = isAdmin || isManager;
+  const hasManagerAccess = isAdmin || isManager;
 
   const getRoleMetadata = () => {
     switch (role) {
@@ -182,6 +185,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
         isWarehouseManager,
         isManualOrderEntry,
         hasAdminOrManager,
+        hasManagerAccess,
         canAccessRoute,
         roleTitle,
         roleBadgeColor,

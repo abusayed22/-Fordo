@@ -2,14 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { RevenueChart } from "@/components/dashboard/revenue-chart";
-import { OrderStatusDonut } from "@/components/dashboard/order-status-donut";
-import { FulfillmentStatus } from "@/components/dashboard/fulfillment-status";
-import { TopRegions } from "@/components/dashboard/top-regions";
+import { RevenueChart } from "@/components/modules/dashboard/revenue-chart";
+import { OrderStatusDonut } from "@/components/modules/dashboard/order-status-donut";
+import { FulfillmentStatus } from "@/components/modules/dashboard/fulfillment-status";
+import { TopRegions } from "@/components/modules/dashboard/top-regions";
 import { mockOrders, mockProducts, Order } from "@/lib/mock-data";
 import {
   Plus,
@@ -17,6 +15,7 @@ import {
   AlertTriangle,
   ChevronRight,
 } from "lucide-react";
+import { StatCard } from "@/components/modules/dashboard/stat-card";
 
 export default function DashboardPage() {
   const { hasManagerAccess } = useRole();

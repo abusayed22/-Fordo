@@ -1,8 +1,9 @@
+import { ApiResponse } from "@/types/api.response";
 import axios from "axios";
 
 
 
-const API_Base_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+const API_Base_URL = process.env.API_BASE_URL || 'http://localhost:5000/api/v1';
 if (!API_Base_URL) {
     throw new Error('API Base URL is not defined. Please set NEXT_PUBLIC_API_BASE_URL in your environment variables.');
 }
@@ -28,9 +29,9 @@ export interface ApiRequestOptions {
 };
 
 
-const httpGet = async (endpoint: string, options?: ApiRequestOptions) => {
+const httpGet = async<TData> (endpoint: string, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).get(endpoint, {
+        const response = await (await axiosInstance()).get<ApiResponse<TData>>(endpoint, {
             params: options?.params,
             headers: options?.headers,
         });
@@ -42,9 +43,9 @@ const httpGet = async (endpoint: string, options?: ApiRequestOptions) => {
 };
 
 
-const httpPost = async (endpoint: string, data: unknown, options?: ApiRequestOptions) => {
+const httpPost = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).post(endpoint, data, {
+        const response = await (await axiosInstance()).post<ApiResponse<TData>>(endpoint, data, {
             params: options?.params,
             headers: options?.headers,
         });
@@ -55,11 +56,23 @@ const httpPost = async (endpoint: string, data: unknown, options?: ApiRequestOpt
     }
 };
 
-
-
-const httpPatch = async (endpoint: string, data: unknown, options?: ApiRequestOptions) => {
+const httpPut = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).patch(endpoint, data, {
+        const response = await (await axiosInstance()).put<ApiResponse<TData>>(endpoint, data, {
+            params: options?.params,
+            headers: options?.headers,
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`PUT request to ${endpoint} failed:`, error);
+        throw error;
+    }
+}
+
+
+const httpPatch = async <TData> (endpoint: string, data: unknown, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
+    try {
+        const response = await (await axiosInstance()).patch <ApiResponse<TData>> (endpoint, data, {
             params: options?.params,
             headers: options?.headers,
         });
@@ -71,9 +84,9 @@ const httpPatch = async (endpoint: string, data: unknown, options?: ApiRequestOp
     }
 }
 
-const httpDelete = async (endpoint: string, options?: ApiRequestOptions) => {
+const httpDelete = async <TData>(endpoint: string, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).delete(endpoint, {
+        const response = await (await axiosInstance()).delete <ApiResponse<TData>>(endpoint, {
             params: options?.params,
             headers: options?.headers,
         });

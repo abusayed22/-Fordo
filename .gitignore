@@ -4,3 +4,11 @@ node_modules
 !.env.example
 dist
 src/generated
+**/node_modules/
+**/.next/
+**/.env
+**/.env.local
+**/.env*.local
+**/out/
+**/build/
+**/dist/
