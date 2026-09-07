@@ -1,0 +1,99 @@
+
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  SUSPENDED
+}
+
+enum UserRole {
+  CUSTOMER
+  MANAGER
+  ADMIN
+  VENDOR
+  DELIVERY_MAN
+  WAREHOUSE_MANAGER
+  MANUAL_ORDER_ENTRY
+}
+
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentGateway {
+  COD
+  BKASH
+  NAGAD
+  SSLCOMMERZ
+  AAMARPAY
+  STRIPE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum InventoryAction {
+  STOCK_IN
+  STOCK_OUT
+  ORDER_PLACED
+  ORDER_CANCELLED
+  RETURN_RECEIVED
+  DAMAGED
+}
+
+enum ProductUnit {
+  // ওজন (Weight)
+  KG 
+  GM //gram
+  MG // milligram
+
+  // তরল বা ভলিউম (Liquid/Volume)
+  LITER
+  ML
+
+  // গণনাযোগ্য একক (Count / Pieces)
+  PIECE
+  PACKET
+  BOX
+  DOZEN
+  PAIR
+  BUNDLE
+  BAG
+  BOTTLE
+  CAN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ExpenseType {
+  RENT              // দোকান/অফিস ভাড়া
+  SALARY            // স্টাফদের বেতন
+  UTILITY           // বিদ্যুৎ, ইন্টারনেট বিল
+  PACKAGING         // পলিথিন, বক্স, টেপ
+  MARKETING         // ফেসবুক বুস্টিং বা অ্যাড
+  DELIVERY_CHARGE   // থার্ড পার্টি কুরিয়ার চার্জ
+  DAMAGED_PRODUCT   // নষ্ট হওয়া মালের ক্ষতি
+  OTHERS
+}
+

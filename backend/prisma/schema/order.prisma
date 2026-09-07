@@ -1,0 +1,51 @@
+
+
+model Order {
+  id              String        @id @default(uuid(7))
+  orderNumber     String        @unique 
+  userId          String
+  addressId       String
+  subTotal        Float         
+  deliveryFee     Float         @default(0.0)
+  discountAmount  Float         @default(0.0) // কুপন বা স্পেশাল ছাড়
+  totalAmount     Float         // কাস্টমার যা পে করবে (subTotal + deliveryFee - discountAmount)
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentGateway @default(COD)
+  customerName    String?
+  customerPhone   String?       
+  customerEmail   String?
+  shippingAddress String?
+  note            String?       
+  deliveryDate    DateTime?     
+  isManual        Boolean   @default(false) // অর্ডারটি কি অনলাইন নাকি ম্যানুয়াল?
+  createdById     String?   // কোন স্টাফ বা ডেলিভারি ম্যান এটি তৈরি করেছে
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdBy       User?     @relation("ManualOrders", fields: [createdById], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address         Address       @relation(fields: [addressId], references: [id])
+  orderItems      OrderItem[]
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid(7))
+  orderId     String
+  productId   String
+  quantity    Float    // যেমন: ১ প্যাকেট হলে 1.0, হাফ কেজি হলে 0.5
+  costPrice   Float
+  unitPrice   Float    // অর্ডার করার মুহূর্তের প্রতি ইউনিট/কেজির দাম
+  totalPrice  Float    // quantity * unitPrice
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+
+

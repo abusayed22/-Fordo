@@ -1,0 +1,14 @@
+model Address {
+  id             String  @id @default(uuid(7))
+  userId         String
+  user           User    @relation(fields: [userId], references: [id])
+  deliveryZoneId String
+  addressLine    String
+  contactPhone   String
+  isDefault      Boolean @default(false)
+  isDeleted       Boolean @default(false)
+
+  order Order[]
+  @@index([userId])
+  @@map("addresses")
+}

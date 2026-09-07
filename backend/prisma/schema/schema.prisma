@@ -1,0 +1,134 @@
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------- model data
+// model User {
+//   id            String   @id @default(uuid(7))
+//   name          String?
+//   phone         String   @unique
+//   email         String?  @unique
+//   emailVerified Boolean  @default(false)
+//   avatar        String?
+//   role          UserRole @default(CUSTOMER)
+//   isDeleted     Boolean  @default(false)
+//   isBlocked     Boolean  @default(false)
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+
+//   addresses      Address[]
+//   orders         Order[]
+//   manualOrders    Order[]   @relation("ManualOrders")
+//   reviews        Review[]
+//   wishlist Wishlist[]
+
+//   // @index
+//   @@map("users")
+// }
+
+
+
+
+
+
+
+
+
+model Purchase {
+  id           String   @id @default(uuid())
+  productId    String
+  quantity     Float    // কতটুকু কিনলেন (যেমন: ৪০ কেজি)
+  unitCost     Float    // প্রতি ইউনিটের কেনা দাম (যেমন: ৭৪ টাকা)
+  totalCost    Float    // মোট বিল (quantity * unitCost)
+  supplierName String? 
+  invoiceNo    String? 
+  purchaseDate DateTime @default(now())
+
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([purchaseDate])
+  @@map("purchases")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  
+  // Cloudinary ফিল্ডসমূহ
+  url       String   // Cloudinary secure_url (ইমেজ ডিসপ্লে করার জন্য)
+  publicId  String   // Cloudinary public_id (ছবি ডিলিট/আপডেট করতে লাগবে)
+  
+  isPrimary Boolean  @default(false) // প্রধান থাম্বনেইল হিসেবে চিহ্নিত করতে
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+ @@index([productId]) 
+  @@map("product_images")
+}
+
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  rating    Int?     // কাস্টমার ১-৫ রেটিং দেবে, রিপ্লাইয়ের ক্ষেত্রে এটি null থাকবে
+  comment   String   // রিভিউ বা রিপ্লাই টেক্সট
+  // ==========================================
+  // REPLY SYSTEM (Self-Relation)
+  // ==========================================
+  parentId  String?  // মূল রিভিউ হলে null, রিপ্লাই হলে মূল রিভিউয়ের id থাকবে
+  parent    Review?  @relation("ReviewReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Review[] @relation("ReviewReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // @@index([productId])
+  // @@index([parentId])
+  // @@map("reviews")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // একজন ইউজার একটি প্রোডাক্ট একবারই উইশলিস্টে যোগ করতে পারবে
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("wishlists")
+}
+
+model Expense {
+  id          String      @id @default(uuid())
+  title       String      // যেমন: "আগস্ট মাসের প্যাকেজিং ব্যাগ কেনা"
+  amount      Float       // খরচের পরিমাণ
+  type        ExpenseType @default(OTHERS)
+  note        String?
+  expenseDate DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+
+  @@index([expenseDate])
+  @@index([type])
+  @@map("expenses")
+}
+
+
+
+
+
