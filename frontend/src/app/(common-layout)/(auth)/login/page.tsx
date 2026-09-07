@@ -1,10 +1,18 @@
 import Login from '@/components/modules/auth/Login'
 import React from 'react'
 
-const LoginPage = () => {
+
+
+interface LoginParams {
+  searchParams: Promise<{ redirect?: string }>;
+}
+
+const LoginPage = async({ searchParams }: LoginParams) => {
+  const params = await searchParams;
+  const redirectPath = params.redirect;
   return (
     <div>
-      <Login />
+      <Login redirectPath={redirectPath} />
     </div>
   )
 }

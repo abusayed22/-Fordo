@@ -25,7 +25,15 @@ import AppField from "@/shared/AppFeild";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function Login() {
+
+
+
+interface LoginFormProps {
+    redirectPath ?: string;
+}
+
+
+export default function Login({ redirectPath }: LoginFormProps) {
   // const queryClient = useQueryClient();   // TODO: if need of caching
 
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +42,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { mutateAsync, isPending, isSuccess } = useMutation({ mutationFn: async (payload: ILoginPayload) => loginAction(payload) })
+  const { mutateAsync, isPending, isSuccess } = useMutation({ mutationFn: async (payload: ILoginPayload) => loginAction(payload,redirectPath) })
 
   const form = useForm({
     defaultValues: {
