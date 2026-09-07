@@ -1,0 +1,21 @@
+{
+  "workbench.colorCustomizations": {
+    // উপরের হেডার / Title Bar কালার
+    "titleBar.activeBackground": "#08764a",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#172d24",
+
+    // বাম পাশের আইকন বার (Activity Bar)
+    "activityBar.background": "#142820",
+    "activityBar.foreground": "#ffffff",
+
+    // ফাইল ফোল্ডার লিস্টের ব্যাকগ্রাউন্ড (Side Bar)
+    "sideBar.background": "#0f1d17",
+    "sideBar.foreground": "#d1fae5",
+    "sideBarTitle.foreground": "#6ee7b7",
+
+    // নিচের স্ট্যাটাস বার (Status Bar)
+    "statusBar.background": "#142820",
+    "statusBar.foreground": "#ffffff"
+  }
+}
