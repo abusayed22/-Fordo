@@ -1,8 +1,10 @@
+"use server";
+
 import { httpClient } from "@/lib/axios/httpClient";
 import { getUserInfo } from "@/services/auth.service";
 import { ApiErrorResponse, ApiResponse } from "@/types/api.response";
 import { IProductResponse } from "@/types/product.typs";
-import { IProductCreateFormData, productCreateZodSchema } from "@/zodValidation/product.validation";
+import { productCreateZodSchema } from "@/zodValidation/product.validation";
 
 
 

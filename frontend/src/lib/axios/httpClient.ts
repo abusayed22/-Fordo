@@ -1,8 +1,8 @@
-"use server";
+import "server-only";
 import { ApiResponse } from "@/types/api.response";
 import axios from "axios";
 import { isTokenExpiringSoon } from "../tokenUtils";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { getNewTokensWithRefreshToken } from "@/services/auth.service";
 
 
@@ -25,6 +25,7 @@ async function tryRefreshToken(
         return;
     }
 
+    const { headers } = await import("next/headers");
     const requestHeader = await headers();
 
     if (requestHeader.get("x-token-refreshed") === "1") {

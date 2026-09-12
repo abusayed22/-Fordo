@@ -3,32 +3,26 @@
 import React, { useMemo, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useRole } from "@/context/role-context";
-import { mockCategories, Category } from "@/lib/mock-data";
 import {
-  Search,
   Plus,
-  Edit2,
-  Trash2,
-  FolderTree,
+  Award,
   Lock,
-  Layers,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  categoryDelete as categoryDeleteAction,
-  categoryUpdate,
-  createCategoryData,
-  getCategoriesData,
-} from "@/services/categories.service";
-import { ICategoryData } from "@/types/dashboard.types";
+  brandDelete,
+  brandUpdate,
+  createBrandData,
+  getBrandsData,
+} from "@/services/brand.service";
 import { DataTable } from "@/shared/table/DataTable";
-import { categoryColumns } from "./categoryCoumn";
+import { brandColumns, IBrandData } from "./brandColumn";
 import AppField from "@/shared/AppFeild";
 import {
-  categoryCreateZodSchema,
-  categoryUpdateZodSchema,
-  CategoryCreateFormData,
-} from "@/zodValidation/category.validation";
+  brandCreateZodSchema,
+  brandUpdateZodSchema,
+  BrandCreateFormData,
+} from "@/zodValidation/brand.validation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,59 +40,53 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-// import { CategoryTable, ICategoryData } from "@/shared/table/DataTable";
-
-export default function CategoriesMainCom() {
+export default function BrandMainComp() {
   
-  const { data: categoryResponse, isLoading } = useQuery({
-    queryKey: ["admin-categories"],
-    queryFn: getCategoriesData,
+  const { data: brandResponse, isLoading } = useQuery({
+    queryKey: ["admin-brands"],
+    queryFn: getBrandsData,
     refetchOnWindowFocus: "always",
   });
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
-  const { mutateAsync: createCategory, isPending: isCreating } = useMutation({
-    mutationFn: createCategoryData,
+  const { mutateAsync: createBrand, isPending: isCreating } = useMutation({
+    mutationFn: createBrandData,
   });
-  const { mutateAsync: updateCategory, isPending: isUpdating } = useMutation({
-    mutationFn: categoryUpdate,
+  const { mutateAsync: updateBrand, isPending: isUpdating } = useMutation({
+    mutationFn: brandUpdate,
   });
-  const { mutateAsync: deleteCategory, isPending: isDeleting } = useMutation({
-    mutationFn: categoryDeleteAction,
+  const { mutateAsync: deleteBrand, isPending: isDeleting } = useMutation({
+    mutationFn: brandDelete,
   });
 
-  const categoriesList = Array.isArray(categoryResponse?.data)
-    ? categoryResponse.data
+  const brandList = Array.isArray(brandResponse?.data)
+    ? brandResponse.data
     : [];
-  const [deletedCategoryIds, setDeletedCategoryIds] = useState<Set<string>>(
+  const [deletedBrandIds, setDeletedBrandIds] = useState<Set<string>>(
     new Set(),
   );
-  const [categoryTableUpdates, setCategoryTableUpdates] = useState<
-    Record<string, Partial<ICategoryData>>
+  const [brandTableUpdates, setBrandTableUpdates] = useState<
+    Record<string, Partial<IBrandData>>
   >({});
-  const tableCategories = useMemo<ICategoryData[]>(
+  const tableBrands = useMemo<IBrandData[]>(
     () =>
-      categoriesList.map((category) => ({
-        id: category.id,
-        name: categoryTableUpdates[category.id]?.name ?? category.name,
-        logo: categoryTableUpdates[category.id]?.logo ?? category.logo ?? "",
-        isDeleted: category.isDeleted ?? false,
-        createdAt: "",
-        updatedAt: "",
-        ...categoryTableUpdates[category.id],
-      })).filter((category) => !deletedCategoryIds.has(category.id)),
-    [categoriesList, categoryTableUpdates, deletedCategoryIds],
+      brandList
+        .map((brand) => ({
+          ...brand,
+          logo: brandTableUpdates[brand.id]?.logo ?? brand.logo ?? "",
+          ...brandTableUpdates[brand.id],
+        }))
+        .filter((brand) => !deletedBrandIds.has(brand.id)),
+    [brandList, brandTableUpdates, deletedBrandIds],
   );
   const { hasManagerAccess, role } = useRole();
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
-  const [searchQuery, setSearchQuery] = useState("");
 
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [editingBrand, setEditingBrand] = useState<IBrandData | null>(null);
+  const [brandToDelete, setBrandToDelete] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
   // Form State
@@ -106,83 +94,62 @@ export default function CategoriesMainCom() {
     defaultValues: {
       name: "",
       logo: null,
-    } satisfies CategoryCreateFormData,
+    } satisfies BrandCreateFormData,
     onSubmit: async ({ value }) => {
       setFormError("");
-      const categorySlug = value.name
+      const brandSlug = value.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
 
-      if (editingCategory) {
+      if (editingBrand) {
         const requestData = new FormData();
         requestData.append(
           "data",
           JSON.stringify({
-            id: editingCategory.id,
+            id: editingBrand.id,
             name: value.name,
-            slug: categorySlug,
+            slug: brandSlug,
           }),
         );
         if (value.logo instanceof File) {
           requestData.append("file", value.logo);
         }
 
-        const response = await updateCategory(requestData);
+        const response = await updateBrand(requestData);
         if (!response.success) {
-          setFormError(response.message || "Unable to update category.");
+          setFormError(response.message || "Unable to update brand.");
           return;
         }
 
-        const nextImage = value.logo instanceof File
+        const nextLogo = value.logo instanceof File
           ? URL.createObjectURL(value.logo)
-          : editingCategory.image;
+          : editingBrand.logo;
 
-        setCategories((currentCategories) =>
-          currentCategories.map((category) =>
-            category.id === editingCategory.id
-              ? { ...category, name: value.name, image: nextImage }
-              : category,
-          ),
-        );
-        setCategoryTableUpdates((currentUpdates) => ({
+        setBrandTableUpdates((currentUpdates) => ({
           ...currentUpdates,
-          [editingCategory.id]: { name: value.name, logo: nextImage },
+          [editingBrand.id]: { name: value.name, logo: nextLogo },
         }));
-        await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+        await queryClient.invalidateQueries({ queryKey: ["admin-brands"] });
       } else {
         if (!(value.logo instanceof File)) return;
-        const uploadedImagePreview = URL.createObjectURL(value.logo);
-
         const requestData = new FormData();
         requestData.append(
           "data",
           JSON.stringify({
             name: value.name,
-            slug: categorySlug,
+            slug: brandSlug,
           }),
         );
         requestData.append("file", value.logo);
 
-        const response = await createCategory(requestData);
+        const response = await createBrand(requestData);
         if (!response.success) {
-          setFormError(response.message || "Unable to create category.");
+          setFormError(response.message || "Unable to create brand.");
           return;
         }
 
-        await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-        const newCat: Category = {
-          id: `cat-${Date.now()}`,
-          name: value.name,
-          slug: categorySlug,
-          image: uploadedImagePreview,
-          description: "",
-          productCount: 0,
-          isActive: true,
-          status: "Active",
-          createdAt: new Date().toISOString().split("T")[0],
-        };
-        setCategories((currentCategories) => [newCat, ...currentCategories]);
+        await queryClient.invalidateQueries({ queryKey: ["admin-brands"] });
       }
 
       setIsModalOpen(false);
@@ -192,62 +159,44 @@ export default function CategoriesMainCom() {
   
   const handleOpenAddModal = () => {
     setFormError("");
-    setEditingCategory(null);
+    setEditingBrand(null);
     form.setFieldValue("name", "");
     form.setFieldValue("logo", null);
     setLogoPreview("");
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (cat: Category) => {
+  const handleOpenEditModal = (brand: IBrandData) => {
     setFormError("");
-    setEditingCategory(cat);
-    form.setFieldValue("name", cat.name);
+    setEditingBrand(brand);
+    form.setFieldValue("name", brand.name);
     form.setFieldValue("logo", null);
-    setLogoPreview(cat.image);
+    setLogoPreview(brand.logo);
     setIsModalOpen(true);
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteBrand = (id: string) => {
     setDeleteError("");
-    setCategoryToDelete(id);
+    setBrandToDelete(id);
   };
 
-  const confirmDeleteCategory = async () => {
-    if (!categoryToDelete) return;
+  const confirmDeleteBrand = async () => {
+    if (!brandToDelete) return;
 
-    const response = await deleteCategory(categoryToDelete);
+    const response = await deleteBrand(brandToDelete);
     if (!response.success) {
-      setDeleteError(response.message || "Unable to delete category.");
+      setDeleteError(response.message || "Unable to delete brand.");
       return;
     }
 
-    setCategories((currentCategories) =>
-      currentCategories.filter((category) => category.id !== categoryToDelete),
-    );
-    setDeletedCategoryIds((currentIds) => {
+    setDeletedBrandIds((currentIds) => {
       const nextIds = new Set(currentIds);
-      nextIds.add(categoryToDelete);
+      nextIds.add(brandToDelete);
       return nextIds;
     });
-    await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-    setCategoryToDelete(null);
+    await queryClient.invalidateQueries({ queryKey: ["admin-brands"] });
+    setBrandToDelete(null);
   };
-
-  const toggleCategoryStatus = (id: string) => {
-    setCategories(
-      categories.map((c) =>
-        c.id === id ? { ...c, status: c.status === "Active" ? "Disabled" : "Active" } : c
-      )
-    );
-  };
-
-  const filteredCategories = categories.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div>
@@ -256,12 +205,12 @@ export default function CategoriesMainCom() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-              Categories Management
+              Brands Management
             </h1>
             <p className="text-[11px] sm:text-xs text-slate-500">
               {hasManagerAccess
-                ? `Full Category CRUD access granted (${role})`
-                : "Officer Mode: Catalog categories list (Read-only)"}
+                ? `Full Brand CRUD access granted (${role})`
+                : "Officer Mode: Catalog brands list (Read-only)"}
             </p>
           </div>
 
@@ -271,7 +220,7 @@ export default function CategoriesMainCom() {
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-xs transition-all cursor-pointer self-start sm:self-auto"
             >
               <Plus className="size-3.5" />
-              <span>Add Category</span>
+              <span>Add Brand</span>
             </button>
           ) : (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold self-start sm:self-auto">
@@ -285,29 +234,17 @@ export default function CategoriesMainCom() {
 
 
           <DataTable
-            columns={categoryColumns}
-            data={tableCategories}
+            columns={brandColumns}
+            data={tableBrands}
             isLoading={isLoading}
             actions={{
               onEdit: hasManagerAccess
-                ? (category) => {
-                    const existingCategory = categories.find(
-                      (item) => item.id === category.id,
-                    ) ?? {
-                      id: category.id,
-                      name: category.name,
-                      slug: category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-                      description: "",
-                      image: category.logo,
-                      productCount: 0,
-                      isActive: !category.isDeleted,
-                      status: category.isDeleted ? "Disabled" : "Active",
-                    };
-                    handleOpenEditModal(existingCategory);
+                ? (brand) => {
+                    handleOpenEditModal(brand);
                   }
                 : undefined,
               onDelete: hasManagerAccess
-                ? (category) => handleDeleteCategory(category.id)
+                ? (brand) => handleDeleteBrand(brand.id)
                 : undefined,
             }}
           />
@@ -318,15 +255,15 @@ export default function CategoriesMainCom() {
           <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
             <SheetHeader className="border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <FolderTree className="size-4 text-slate-700" />
+                  <Award className="size-4 text-slate-700" />
                 <SheetTitle>
-                  {editingCategory ? "Edit Category" : "Add New Category"}
+                  {editingBrand ? "Edit Brand" : "Add New Brand"}
                 </SheetTitle>
               </div>
               <SheetDescription>
-                {editingCategory
-                  ? "Update the category details."
-                  : "Create a new catalog category."}
+                {editingBrand
+                  ? "Update the brand details."
+                  : "Create a new catalog brand."}
               </SheetDescription>
             </SheetHeader>
 
@@ -348,14 +285,14 @@ export default function CategoriesMainCom() {
                   <form.Field
                     name="name"
                     validators={{
-                      onChange: categoryCreateZodSchema.shape.name,
-                      onSubmit: categoryCreateZodSchema.shape.name,
+                      onChange: brandCreateZodSchema.shape.name,
+                      onSubmit: brandCreateZodSchema.shape.name,
                     }}
                   >
                     {(field) => (
                       <AppField
                         field={field}
-                        label="Category Name *"
+                        label="Brand Name *"
                         placeholder="e.g. Mens Ethnic Wear"
                       />
                     )}
@@ -365,17 +302,17 @@ export default function CategoriesMainCom() {
                 <form.Field
                   name="logo"
                   validators={{
-                    onChange: editingCategory
-                      ? categoryUpdateZodSchema.shape.logo
-                      : categoryCreateZodSchema.shape.logo,
-                    onSubmit: editingCategory
-                      ? categoryUpdateZodSchema.shape.logo
-                      : categoryCreateZodSchema.shape.logo,
+                    onChange: editingBrand
+                      ? brandUpdateZodSchema.shape.logo
+                      : brandCreateZodSchema.shape.logo,
+                    onSubmit: editingBrand
+                      ? brandUpdateZodSchema.shape.logo
+                      : brandCreateZodSchema.shape.logo,
                   }}
                 >
                   {(field) => (
                     <div>
-                      <label className="mb-1 block font-semibold text-slate-700">Category Image *</label>
+                      <label className="mb-1 block font-semibold text-slate-700">Brand Logo *</label>
                       <div className="flex gap-2">
                         <div className="min-w-0 flex-1">
                           <input
@@ -419,9 +356,9 @@ export default function CategoriesMainCom() {
                   >
                     {isCreating || isUpdating
                       ? "Uploading..."
-                      : editingCategory
-                        ? "Update Category"
-                        : "Create Category"}
+                      : editingBrand
+                        ? "Update Brand"
+                        : "Create Brand"}
                   </button>
                 </div>
               </form>
@@ -429,18 +366,18 @@ export default function CategoriesMainCom() {
         </Sheet>
 
         <AlertDialog
-          open={categoryToDelete !== null}
+          open={brandToDelete !== null}
           onOpenChange={(open) => {
-            if (!open) setCategoryToDelete(null);
+            if (!open) setBrandToDelete(null);
           }}
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete category?</AlertDialogTitle>
+              <AlertDialogTitle>Delete brand?</AlertDialogTitle>
               <AlertDialogDescription>
                 {deleteError || (
-                  "This category will be removed from the list. Products in this " +
-                  "category will become unassigned."
+                    "This brand will be removed from the list. Products using this " +
+                    "brand will become unassigned."
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -448,7 +385,7 @@ export default function CategoriesMainCom() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 type="button"
-                onClick={confirmDeleteCategory}
+                onClick={confirmDeleteBrand}
                 disabled={isDeleting}
                 className="bg-rose-600 text-white hover:bg-rose-700"
               >
