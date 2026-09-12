@@ -27,7 +27,7 @@ const manualOrderEntryProtectRoute:routeConfig = { // TODO:
 
 const adminProtectRoute:routeConfig = {// TODO:
     exact : [], 
-    pattern : [/^\/admin\/dashboard/ ]
+    pattern : [/^\/admin(?:\/|$)/]
 }
 
 const customerProtectRoute:routeConfig = { // TODO:

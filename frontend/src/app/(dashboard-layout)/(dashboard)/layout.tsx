@@ -1,4 +1,4 @@
-import { AdminLayout } from '@/components/layout/roles';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
 
 
 
@@ -8,8 +8,8 @@ export default function MainDashboardLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <AdminLayout>
+        <DashboardLayout>
             {children}
-        </AdminLayout>
+        </DashboardLayout>
     );
 }

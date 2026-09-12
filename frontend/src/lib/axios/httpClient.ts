@@ -1,20 +1,63 @@
+"use server";
 import { ApiResponse } from "@/types/api.response";
 import axios from "axios";
+import { isTokenExpiringSoon } from "../tokenUtils";
+import { cookies, headers } from "next/headers";
+import { getNewTokensWithRefreshToken } from "@/services/auth.service";
 
 
 
-const API_Base_URL = process.env.API_BASE_URL || 'http://localhost:5000/api/v1';
-if (!API_Base_URL) {
-    throw new Error('API Base URL is not defined. Please set NEXT_PUBLIC_API_BASE_URL in your environment variables.');
+
+
+const API_BASE_URL = process.env.API_BASE_URL;
+
+if (!API_BASE_URL) {
+    throw new Error('API_BASE_URL is not defined in environment variables');
 }
 
 
+
+async function tryRefreshToken(
+    accessToken: string,
+    refreshToken: string
+): Promise<void> {
+    if (!(await isTokenExpiringSoon(accessToken))) {
+        return;
+    }
+
+    const requestHeader = await headers();
+
+    if (requestHeader.get("x-token-refreshed") === "1") {
+        return; // avoid multiple refresh attempts in the same request lifecycle
+    }
+
+    try {
+        await getNewTokensWithRefreshToken(refreshToken);
+    } catch (error: any) {
+        console.error("Error refreshing token in http client:", error);
+    }
+}
+
 const axiosInstance = async () => {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("accessToken")?.value;
+    const refreshToken = cookieStore.get("refreshToken")?.value;
+
+    if (accessToken && refreshToken) {
+        await tryRefreshToken(accessToken, refreshToken);
+    }
+
+    const cookieHeader = cookieStore
+        .getAll()
+        .map((cookie) => `${cookie.name}=${cookie.value}`)
+        .join("; ");
     const instance = axios.create({
-        baseURL: API_Base_URL,
+        baseURL: API_BASE_URL,
         timeout: 30000,
         headers: {
             'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
     })
 
@@ -29,9 +72,11 @@ export interface ApiRequestOptions {
 };
 
 
-const httpGet = async<TData> (endpoint: string, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
+const httpGet = async<TData>(endpoint: string, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).get<ApiResponse<TData>>(endpoint, {
+        const instance = await axiosInstance();
+        const response = await instance.get<ApiResponse<TData>>(endpoint, {
+
             params: options?.params,
             headers: options?.headers,
         });
@@ -43,7 +88,9 @@ const httpGet = async<TData> (endpoint: string, options?: ApiRequestOptions):Pro
 };
 
 
-const httpPost = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
+
+
+const httpPost = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
     try {
         const response = await (await axiosInstance()).post<ApiResponse<TData>>(endpoint, data, {
             params: options?.params,
@@ -56,7 +103,7 @@ const httpPost = async <TData>(endpoint: string, data: unknown, options?: ApiReq
     }
 };
 
-const httpPut = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
+const httpPut = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
     try {
         const response = await (await axiosInstance()).put<ApiResponse<TData>>(endpoint, data, {
             params: options?.params,
@@ -70,9 +117,9 @@ const httpPut = async <TData>(endpoint: string, data: unknown, options?: ApiRequ
 }
 
 
-const httpPatch = async <TData> (endpoint: string, data: unknown, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
+const httpPatch = async <TData>(endpoint: string, data: unknown, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).patch <ApiResponse<TData>> (endpoint, data, {
+        const response = await (await axiosInstance()).patch<ApiResponse<TData>>(endpoint, data, {
             params: options?.params,
             headers: options?.headers,
         });
@@ -84,9 +131,9 @@ const httpPatch = async <TData> (endpoint: string, data: unknown, options?: ApiR
     }
 }
 
-const httpDelete = async <TData>(endpoint: string, options?: ApiRequestOptions):Promise<ApiResponse<TData>> => {
+const httpDelete = async <TData>(endpoint: string, options?: ApiRequestOptions): Promise<ApiResponse<TData>> => {
     try {
-        const response = await (await axiosInstance()).delete <ApiResponse<TData>>(endpoint, {
+        const response = await (await axiosInstance()).delete<ApiResponse<TData>>(endpoint, {
             params: options?.params,
             headers: options?.headers,
         });
@@ -102,7 +149,7 @@ const httpDelete = async <TData>(endpoint: string, options?: ApiRequestOptions):
 export const httpClient = {
     get: httpGet,
     post: httpPost,
-    put: httpPatch, 
+    put: httpPatch,
     patch: httpPatch,
     delete: httpDelete,
 }

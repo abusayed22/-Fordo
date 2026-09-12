@@ -1,29 +1,21 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRole, UserRole } from "@/context/role-context";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Store,
-  ShieldCheck,
-  CheckCircle2,
-  RefreshCw,
-  Sparkles,
-  Phone,
-} from "lucide-react";
-import { AppSubmitButton } from "@/shared/AppButton";
+import { Eye, EyeOff, Store } from "lucide-react";
+// import { AppSubmitButton } from "@/shared/AppButton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ILoginPayload, loginZodSchema } from "@/zodValidation/auth.validation";
-import { loginAction } from "@/app/(common-layout)/(auth)/login/_actions";
+// import { ILoginPayload, loginZodSchema } from "@/zodValidation/auth.validation";
+// import { loginAction } from "@/app/(common-layout)/(auth)/login/_actions";
 import { useForm } from "@tanstack/react-form";
-import AppField from "@/shared/AppFeild";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+// import AppField from "@/shared/AppFeild";
+// import { Button } from "@/components/ui/button";
+// import { Alert, AlertDescription } from "@/components/ui/alert";
+import { UserRole } from "../../../lib/authUtils";
+import { ILoginPayload, loginZodSchema } from "../../../zodValidation/auth.validation";
+import AppField from "../../../shared/AppFeild";
+import { Button } from "../../ui/button";
+import { AppSubmitButton } from "../../../shared/AppButton";
+import { loginAction } from "../../../app/(common-layout)/(auth)/login/_actions";
 
 
 

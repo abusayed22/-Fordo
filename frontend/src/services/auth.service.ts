@@ -1,7 +1,7 @@
 "use server";
 
-import { setTokenInCookie } from "@/lib/tokenUtils";
 import { cookies } from "next/headers";
+import { setTokenInCookie } from "../lib/tokenUtils";
 
 const BASE_API_URL = process.env.API_BASE_URL;
 

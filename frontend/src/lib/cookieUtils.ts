@@ -6,7 +6,7 @@ const setCookie = async (name: string, value: string, age: number) => {
     const cookie = await cookies();
     cookie.set(name, value, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
         maxAge: age,
