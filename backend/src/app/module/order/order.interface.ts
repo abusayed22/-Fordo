@@ -1,16 +1,28 @@
-import { PaymentGateway } from "../../../generated/prisma/enums";
+import { OrderStatus, PaymentStatus, PaymentGateway } from "../../../generated/prisma/enums";
+
+export interface IOrderItemPayload {
+  productId: string;
+  quantity: number;
+}
 
 export interface ICreateOrderPayload {
-  userId: string;
-  createdById?: string;
   addressId: string;
-  items: { productId: string; quantity: number }[];
   deliveryFee?: number;
   discountAmount?: number;
   paymentMethod?: PaymentGateway;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  shippingAddress?: string;
   note?: string;
-  deliveryDate?: Date;
-  isManual?: boolean;
+  items: IOrderItemPayload[];
 }
 
+export interface IOrderQueryParams {
+  page?: number;
+  limit?: number;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  search?: string;
+}
 

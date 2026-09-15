@@ -66,7 +66,16 @@ export const deleteFileFromCloudinary = async (url: string) => {
   }
 }
 
-
+export const extractPublicId = (url: string): string => {
+  const uploadIndex = url.indexOf("/upload/");
+  if (uploadIndex === -1) return `prod_${Date.now()}`;
+  
+  const afterUpload = url.slice(uploadIndex + 8);
+  const withoutVersion = afterUpload.replace(/^v\d+\//, "");
+  const lastDotIndex = withoutVersion.lastIndexOf(".");
+  
+  return lastDotIndex !== -1 ? withoutVersion.slice(0, lastDotIndex) : withoutVersion;
+};
 
 
 export const cloudinaryUpload = cloudinary

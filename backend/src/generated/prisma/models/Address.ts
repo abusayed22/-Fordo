@@ -368,9 +368,9 @@ export type AddressOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type AddressScalarRelationFilter = {
-  is?: Prisma.AddressWhereInput
-  isNot?: Prisma.AddressWhereInput
+export type AddressNullableScalarRelationFilter = {
+  is?: Prisma.AddressWhereInput | null
+  isNot?: Prisma.AddressWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -429,10 +429,12 @@ export type AddressCreateNestedOneWithoutOrderInput = {
   connect?: Prisma.AddressWhereUniqueInput
 }
 
-export type AddressUpdateOneRequiredWithoutOrderNestedInput = {
+export type AddressUpdateOneWithoutOrderNestedInput = {
   create?: Prisma.XOR<Prisma.AddressCreateWithoutOrderInput, Prisma.AddressUncheckedCreateWithoutOrderInput>
   connectOrCreate?: Prisma.AddressCreateOrConnectWithoutOrderInput
   upsert?: Prisma.AddressUpsertWithoutOrderInput
+  disconnect?: Prisma.AddressWhereInput | boolean
+  delete?: Prisma.AddressWhereInput | boolean
   connect?: Prisma.AddressWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.AddressUpdateToOneWithWhereWithoutOrderInput, Prisma.AddressUpdateWithoutOrderInput>, Prisma.AddressUncheckedUpdateWithoutOrderInput>
 }

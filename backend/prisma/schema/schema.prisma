@@ -9,6 +9,12 @@ datasource db {
   provider = "postgresql"
 }
 
+// TODO: there are table create due step by step 
+// ADJUSTMENT  // ম্যানুয়াল স্টক সংশোধন
+//   DAMAGE      // নষ্ট বা মেয়াদোত্তীর্ণ মাল বাদ দেওয়া
+//   RETURN  // order cenelled করা হয়েছে
+
+
 // ---------------- model data
 // model User {
 //   id            String   @id @default(uuid(7))

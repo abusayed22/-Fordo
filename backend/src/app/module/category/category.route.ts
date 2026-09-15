@@ -12,9 +12,9 @@ import { multerUpload } from "../../../config/multer";
 const route = Router();
 
 
-route.get('/',CategoryController.categoryGet)
+route.get('/',checkAuth(UserRole.ADMIN,UserRole.MANAGER,UserRole.CUSTOMER),CategoryController.categoryGet)
 route.delete('/:id',checkAuth(UserRole.ADMIN),CategoryController.categoryDelete)
-route.put('/:id',checkAuth(UserRole.ADMIN,UserRole.MANAGER),ValidationRequest(updateCategorySchema),CategoryController.categoryUpdate)
+route.patch('/:id',checkAuth(UserRole.ADMIN,UserRole.MANAGER),multerUpload.single("file"),ValidationRequest(updateCategorySchema),CategoryController.categoryUpdate)
 route.post('/', checkAuth(UserRole.ADMIN,UserRole.MANAGER,UserRole.CUSTOMER),multerUpload.single("file"), ValidationRequest(createCategorySchema),CategoryController.categoryCreate);
 
 export const CategoryRoute = route;

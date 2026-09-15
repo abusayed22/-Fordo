@@ -13,10 +13,11 @@ export interface ICreateProductPayload {
   originalPrice: number;
   sellingPrice: number;
   stock: number;
-  unit: ProductUnit;
+  unitType: ProductUnit;
   unitValue?: number;
   isDiscounted?: boolean;
   discountType?: DiscountType;
+  createdById: string;
   discountValue?: number;
   discountExpires?: Date;
   isAvailable?: boolean;
@@ -34,3 +35,6 @@ export interface IUpdateProductPayload {
   supplierName?: string;
   invoiceNo?: string;
 }
+
+
+

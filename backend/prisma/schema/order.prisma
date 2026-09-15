@@ -4,7 +4,7 @@ model Order {
   id              String        @id @default(uuid(7))
   orderNumber     String        @unique 
   userId          String
-  addressId       String
+  addressId       String?
   subTotal        Float         
   deliveryFee     Float         @default(0.0)
   discountAmount  Float         @default(0.0) // কুপন বা স্পেশাল ছাড়
@@ -24,7 +24,7 @@ model Order {
   updatedAt       DateTime      @updatedAt
   createdBy       User?     @relation("ManualOrders", fields: [createdById], references: [id])
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  address         Address       @relation(fields: [addressId], references: [id])
+  address         Address ?     @relation(fields: [addressId], references: [id])
   orderItems      OrderItem[]
   @@index([userId])
   @@index([status])

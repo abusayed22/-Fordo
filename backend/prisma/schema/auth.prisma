@@ -19,6 +19,7 @@ model User {
   manualOrders Order[]    @relation("ManualOrders")
   reviews      Review[]
   wishlist     Wishlist[]
+  createdProducts Product[] @relation("CreatedProducts")
 
   @@map("user")
 }

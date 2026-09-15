@@ -4,7 +4,9 @@ import { BrandController } from "./brand.controller";
 // import { UserRole } from "../../../generated/prisma/enums";
 import { ValidationRequest } from "../../middleware/validationRequest";
 import { multerUpload } from "../../../config/multer";
-import { createBrandZodSchema } from "./brand.validation";
+import { createBrandZodSchema, updateBrandZodSchema } from "./brand.validation";
+import { checkAuth } from "../../middleware/checkAuth";
+import { UserRole } from "../../../generated/prisma/enums";
 
 
 
@@ -13,9 +15,9 @@ const route = Router();
 
 
 route.get('/',BrandController.brandFetch )
-route.delete('/:id',BrandController.brandDelete)
-route.put('/:id',BrandController.brandUpdate)
-route.post('/',multerUpload.single("file"),ValidationRequest(createBrandZodSchema), BrandController.brandCreate);
+route.delete('/:id',checkAuth(UserRole.ADMIN,UserRole.MANAGER,UserRole.CUSTOMER),BrandController.brandDelete)
+route.patch('/:id',checkAuth(UserRole.ADMIN,UserRole.MANAGER,UserRole.CUSTOMER),multerUpload.single("file"),ValidationRequest(updateBrandZodSchema),BrandController.brandUpdate);
+route.post('/',checkAuth(UserRole.ADMIN,UserRole.MANAGER,UserRole.CUSTOMER),multerUpload.single("file"),ValidationRequest(createBrandZodSchema), BrandController.brandCreate);
 
 
 

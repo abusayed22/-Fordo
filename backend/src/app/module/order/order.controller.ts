@@ -1,70 +1,77 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import sendResponse from "../../shared/sendResponse";
 import { OrderService } from "./order.service";
-import { ICreateOrderPayload } from "./order.interface";
-import { Request, Response } from "express";
 
-
-type OrderRequest = Request & ICreateOrderPayload
-
-const createOrder = async (req: OrderRequest, res: Response) => {
+const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {userId} = req.body.userId;
-    
-    const createdById = (req as any).user?.id;
+    const userId = (req.user as any).userId;
+    const result = await OrderService.createOrder(req.body, userId);
 
-    const payload = {
-      ...req.body,https:
-      userId,
-      createdById,
-    };
-
-    const result = await OrderService.createOrder(payload as any);
-
-    sendResponse(res,{success:true,message:"Order placed successfully",data:result,statusCode:StatusCodes.OK});
-    
-  } catch (error: any) {
-    sendResponse(res,{success:false,message:error.message || "Failed to place order",statusCode:StatusCodes.BAD_REQUEST});
-  }
-};
-
-
-const getSingleOrder = async (req: Request, res: Response) => {
-  try {
-    const user = (req as any).user;
-    const result = await OrderService.getSingleOrder(req.params.id as string, user?.id, user?.role);
-
-    return res.status(200).json({
+    res.status(StatusCodes.CREATED).json({
       success: true,
+      statusCode: StatusCodes.CREATED,
+      message: "Order placed successfully",
       data: result,
     });
-  } catch (error: any) {
-    return res.status(404).json({
-      success: false,
-      message: error.message || "Order not found",
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
-
-const updateOrderStatus = async (req: Request, res: Response) => {
+const getOrders = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await OrderService.updateOrderStatus(req.params.id as string, req.body);
+    const user = req.user as any;
+    const result = await OrderService.getOrders(req.query, user);
 
-    return res.status(200).json({
+    res.status(StatusCodes.OK).json({
       success: true,
+      statusCode: StatusCodes.OK,
+      message: "Orders retrieved successfully",
+      meta: result.meta,
+      data: result.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getSingleOrder = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const user = req.user as any;
+    const result = await OrderService.getSingleOrder(id, user);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Order details fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateOrderStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const result = await OrderService.updateOrderStatus(id, status);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      statusCode: StatusCodes.OK,
       message: "Order status updated successfully",
       data: result,
     });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to update order",
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
-
-
-export const OrderController = {createOrder,getSingleOrder,updateOrderStatus};
+export const OrderController = {
+  createOrder,
+  getOrders,
+  getSingleOrder,
+  updateOrderStatus,
+};

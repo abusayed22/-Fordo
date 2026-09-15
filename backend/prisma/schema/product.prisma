@@ -16,7 +16,7 @@ model Product {
   discountValue   Float?         @default(0.0)
   discountExpires DateTime?
   stock           Int            @default(0)
-  unit            ProductUnit
+  unitType            ProductUnit
   unitValue       Float?
   supplierName    String?
   invoiceNo       String?
@@ -33,6 +33,9 @@ model Product {
   review     Review[]
   wishlist   Wishlist[]
   purchases  Purchase[]
+
+  createdById String
+  createdBy   User     @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
   @@index([brandId])

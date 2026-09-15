@@ -11,8 +11,8 @@ const getAccessToken = (payload:JwtPayload) => {
 }
 
 const getRefreshToken = (payload:JwtPayload) => {
-    // const refreshToken = jwtService.createToken(payload,envVars.ACCESS_TOKEN_SECRET,{expiresIn:60 * 60 * 60 * 24 * 7} as SignOptions)
-    const refreshToken = jwtService.createToken(payload,envVars.REFRESH_TOKEN_SECRET,{expiresIn:60 * 60 * 60 * 24 * 7} as SignOptions)
+    const refreshToken = jwtService.createToken(payload,envVars.ACCESS_TOKEN_SECRET,{expiresIn:60 * 60 * 60 * 24 * 7} as SignOptions)
+    // const refreshToken = jwtService.createToken(payload,envVars.REFRESH_TOKEN_SECRET,{expiresIn:60 * 60 * 60 * 24 * 7} as SignOptions)
     return refreshToken;
 }
 
