@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { mockProducts, mockCategories, mockBrands, Product } from "@/lib/mock-data";
 import {
   Search,
@@ -16,7 +15,8 @@ import {
 } from "lucide-react";
 
 export default function ProductsPage() {
-  const { hasManagerAccess, role } = useRole();
+  const hasManagerAccess = true;
+  const role = "ADMIN";
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");

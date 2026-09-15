@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
 import { RevenueChart } from "@/components/modules/dashboard/revenue-chart";
 import { OrderStatusDonut } from "@/components/modules/dashboard/order-status-donut";
@@ -32,7 +31,7 @@ export default function AdminDashboard() {
   //http://localhost:5000/api/v1/doctors?page=1&limit=2&searchTerm=ortho&appointmentFee[gt]=1000&appointmentFee[lte]=1500&fields=name,email&sortBy=user.name.firstName&sortOrder=asc&experience[gt]=7&include=specialties&user.role=DOCTOR&specialties.specialty.title=Neurology&gender=MALE&specialties.specialty.title=Cardiology2
   
 
-  const { hasManagerAccess } = useRole();
+  const hasManagerAccess = true;
   const [orders] = useState<Order[]>(mockOrders);
 
   if (!hasManagerAccess) {

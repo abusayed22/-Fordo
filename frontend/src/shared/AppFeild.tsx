@@ -69,7 +69,10 @@ const AppField = ({
           value={field.state.value ?? ""}
           placeholder={placeholder}
           onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            field.handleChange(type === "number" ? Number(value || 0) : value);
+          }}
           disabled={disabled}
           aria-invalid={hasError}
           aria-describedby={hasError ? `${field.name}-error` : undefined}

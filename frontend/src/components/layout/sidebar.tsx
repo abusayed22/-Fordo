@@ -11,8 +11,7 @@ import {
   Store,
   HelpCircle,
 } from "lucide-react";
-import { useRole } from "@/context/role-context";
-import { getDefaultDashboardRoute } from "@/lib/authUtils";
+import { getDefaultDashboardRoute, UserRole } from "@/lib/authUtils";
 import { getNavItemsByRole } from "@/lib/navItems";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -44,7 +43,8 @@ export function Sidebar({
   setIsCollapsed,
 }: SidebarProps) {
   const pathname = usePathname();
-  const { role, roleTitle, roleBadgeColor } = useRole();
+  const role = getSidebarRole(pathname);
+  const { roleTitle, roleBadgeColor } = getRoleMetadata(role);
 
   const navSections = getNavItemsByRole(role) || [];
   const homeDashboardUrl = getDefaultDashboardRoute(role);
@@ -224,4 +224,29 @@ export function Sidebar({
       </aside>
     </>
   );
+}
+
+function getSidebarRole(pathname: string): UserRole {
+  if (pathname.startsWith("/admin")) return "ADMIN";
+  if (pathname.startsWith("/manager")) return "MANAGER";
+  if (pathname.startsWith("/manual-order-entry")) return "MANUAL_ORDER_ENTRY";
+  if (pathname.startsWith("/customer")) return "CUSTOMER";
+  if (pathname.startsWith("/vendor")) return "VENDOR";
+  if (pathname.startsWith("/delivery")) return "DELIVERY_MAN";
+  if (pathname.startsWith("/warehouse")) return "WAREHOUSE_MANAGER";
+  return "CUSTOMER";
+}
+
+function getRoleMetadata(role: UserRole) {
+  const metadata: Record<UserRole, { roleTitle: string; roleBadgeColor: string }> = {
+    ADMIN: { roleTitle: "Super Admin (Full Access)", roleBadgeColor: "#10B981" },
+    MANAGER: { roleTitle: "Operations Manager", roleBadgeColor: "#3B82F6" },
+    CUSTOMER: { roleTitle: "Customer Portal", roleBadgeColor: "#8B5CF6" },
+    VENDOR: { roleTitle: "Merchant / Vendor", roleBadgeColor: "#EC4899" },
+    DELIVERY_MAN: { roleTitle: "Delivery Rider", roleBadgeColor: "#06B6D4" },
+    WAREHOUSE_MANAGER: { roleTitle: "Warehouse & Stock Mgr", roleBadgeColor: "#F97316" },
+    MANUAL_ORDER_ENTRY: { roleTitle: "Order Entry Officer (POS)", roleBadgeColor: "#F59E0B" },
+  };
+
+  return metadata[role];
 }

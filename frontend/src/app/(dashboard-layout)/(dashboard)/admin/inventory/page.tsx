@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
 import { mockProducts, Product } from "@/lib/mock-data";
 import {
@@ -16,7 +15,8 @@ import {
 } from "lucide-react";
 
 export default function InventoryPage() {
-  const { hasManagerAccess, role } = useRole();
+  const hasManagerAccess = true;
+  const role = "ADMIN";
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [activeFilter, setActiveFilter] = useState<"All" | "In Stock" | "Low Stock" | "Out of Stock">("All");
   const [searchQuery, setSearchQuery] = useState("");

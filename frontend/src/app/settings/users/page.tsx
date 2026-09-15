@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
 import { mockStaff, StaffUser } from "@/lib/mock-data";
 import {
@@ -14,7 +13,7 @@ import {
 } from "lucide-react";
 
 export default function OfficersUsersPage() {
-  const { isAdmin } = useRole();
+  const isAdmin = true;
   const [officerList, setOfficerList] = useState<StaffUser[]>(mockStaff);
   const [isModalOpen, setIsModalOpen] = useState(false);
 

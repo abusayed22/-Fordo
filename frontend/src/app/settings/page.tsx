@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
 import { initialSettings } from "@/lib/mock-data";
 import {
@@ -15,7 +14,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { isAdmin } = useRole();
+  const isAdmin = true;
   const [settings, setSettings] = useState(initialSettings);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<"delivery" | "payment" | "courier" | "store">("delivery");

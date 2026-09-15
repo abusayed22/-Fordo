@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { useRole } from "@/context/role-context";
 import {
   Plus,
   Award,
@@ -80,7 +79,8 @@ export default function BrandMainComp() {
         .filter((brand) => !deletedBrandIds.has(brand.id)),
     [brandList, brandTableUpdates, deletedBrandIds],
   );
-  const { hasManagerAccess, role } = useRole();
+  const hasManagerAccess = true;
+  const role = "ADMIN";
 
 
   // Modal State

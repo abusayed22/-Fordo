@@ -11,7 +11,6 @@ import {
   Trash2,
   ArrowRight,
   Truck,
-  CheckCircle2,
 } from "lucide-react";
 
 export function StoreCartDrawer() {
@@ -96,8 +95,15 @@ export function StoreCartDrawer() {
                 </button>
               </div>
             ) : (
-              cart.map((item) => (
-                <div
+              cart.map((item) => {
+                const originalPrice = item.product.regularPrice || item.product.price;
+                const salePrice = item.product.salePrice;
+                const discountAmount = Math.max(0, originalPrice - salePrice);
+                const discountPercent = originalPrice > salePrice
+                  ? Math.round((discountAmount / originalPrice) * 100)
+                  : 0;
+
+                return <div
                   key={item.product.id}
                   className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-3 text-xs shadow-2xs hover:border-slate-300 transition-colors"
                 >
@@ -114,7 +120,13 @@ export function StoreCartDrawer() {
                     <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                       <span>Size: {item.selectedSize}</span>
                       <span>•</span>
-                      <span>৳{item.product.salePrice}</span>
+                      <span className="font-semibold text-emerald-700">৳{salePrice.toLocaleString()}</span>
+                      {discountAmount > 0 && (
+                        <>
+                          <span className="text-slate-400 line-through">৳{originalPrice.toLocaleString()}</span>
+                          <span className="font-bold text-rose-600">-{discountPercent}%</span>
+                        </>
+                      )}
                     </div>
 
                     {/* Quantity modifier */}
@@ -138,8 +150,13 @@ export function StoreCartDrawer() {
                       </div>
 
                       <span className="font-bold text-slate-900 ml-auto">
-                        ৳{(item.product.salePrice * item.quantity).toLocaleString()}
+                        ৳{(salePrice * item.quantity).toLocaleString()}
                       </span>
+                      {discountAmount > 0 && (
+                        <span className="text-[10px] font-medium text-rose-600">
+                          Save ৳{(discountAmount * item.quantity).toLocaleString()}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -150,8 +167,8 @@ export function StoreCartDrawer() {
                   >
                     <Trash2 className="size-3.5" />
                   </button>
-                </div>
-              ))
+                </div>;
+              })
             )}
           </div>
 

@@ -32,22 +32,22 @@ export const manualOrderNavItems : NavSection[] = [
     items: [
       {
         title: "New Order (POS)",
-        href: "/manual-order-entity/orders/new",
+        href: "/manual-order-entry/orders/new",
         icon: "PlusCircle",
       },
       {
         title: "Orders List",
-        href: "/manual-order-entity/orders",
+        href: "/manual-order-entry/orders",
         icon: "ShoppingBag",
       },
       {
         title: "Customer Search",
-        href: "/manual-order-entity/customers",
+        href: "/manual-order-entry/customers",
         icon: "Users",
       },
       {
         title: "Live Stock Check",
-        href: "/manual-order-entity/products",
+        href: "/manual-order-entry/products",
         icon: "Package",
       },
     ],
@@ -68,16 +68,16 @@ export const adminNavItems: NavSection[] = [
                href: "/admin/customers",
                icon: "User",
            },
-           {
-               title: "Inventory",
-               href: "/admin/inventory",
-               icon: "ShoppingBag",
-           },
-           {
-               title: "Orders",
-               href: "/admin/orders",
-               icon: "List",
-           },
+        //    {
+        //        title: "Inventory",
+        //        href: "/admin/inventory",
+        //        icon: "ShoppingBag",
+        //    },
+        //    {
+        //        title: "Orders",
+        //        href: "/admin/orders",
+        //        icon: "List",
+        //    },
            {
                title: "Products",
                href: "/admin/products",
@@ -89,7 +89,7 @@ export const adminNavItems: NavSection[] = [
     title: "Catalog & Inventory",
     items: [
       {
-        title: "Products",
+        title: "New Product",
         href: "/admin/products/new",
         icon: "Package",
       },
@@ -149,7 +149,6 @@ export const customerNavItems: NavSection[] = [
         ],
     },
 ];
-
 
 export const getNavItemsByRole = (role : UserRole) : NavSection[] => {
     const commonNav = commonNavItems(role);

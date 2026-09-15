@@ -22,7 +22,7 @@ const commonProtectRoute:routeConfig = {
 
 const manualOrderEntryProtectRoute:routeConfig = { // TODO:
     exact : [], 
-    pattern : [/^\/manual-order-entry\/dashboard/ ]
+    pattern : [/^\/manual-order-entry(?:\/|$)/ ]
 }
 
 const adminProtectRoute:routeConfig = {// TODO:
@@ -78,7 +78,7 @@ export const getDefaultDashboardRoute = (role : UserRole) => {
         return "/admin/dashboard";
     }
     if(role === "MANUAL_ORDER_ENTRY") {
-        return "/MANUAL_ORDER_ENTRY/dashboard";
+        return "/manual-order-entry";
     }
     if(role === "CUSTOMER") {
         return "/dashboard";

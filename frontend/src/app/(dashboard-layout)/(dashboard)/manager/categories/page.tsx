@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { mockCategories, Category } from "@/lib/mock-data";
 import {
   Search,
@@ -17,7 +16,8 @@ import {
 } from "lucide-react";
 
 export default function CategoriesPage() {
-  const { hasManagerAccess, role } = useRole();
+  const hasManagerAccess = true;
+  const role = "ADMIN";
   const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [searchQuery, setSearchQuery] = useState("");
 

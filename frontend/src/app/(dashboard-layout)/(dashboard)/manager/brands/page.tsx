@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { mockBrands, Brand } from "@/lib/mock-data";
 import {
   Search,
@@ -17,7 +16,8 @@ import {
 } from "lucide-react";
 
 export default function BrandsPage() {
-  const { hasManagerAccess, role } = useRole();
+  const hasManagerAccess = true;
+  const role = "ADMIN";
   const [brands, setBrands] = useState<Brand[]>(mockBrands);
   const [searchQuery, setSearchQuery] = useState("");
 

@@ -2,12 +2,11 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { mockCategories, mockBrands } from "@/lib/mock-data";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ChevronDown,
   Upload,
   Sparkles,
   Loader2,
@@ -22,33 +21,194 @@ import {
   Receipt,
   Percent,
 } from "lucide-react";
-import { createProductAction } from "@/app/(dashboard-layout)/(dashboard)/admin/products/_actions";
+import { getBrandsData } from "@/services/brand.service";
+import { getCategoriesData } from "@/services/categories.service";
 import AppField from "@/shared/AppFeild";
 import { DiscountType, ProductUnit } from "@/types/product.typs";
+import {
+  ProductCreateFormData,
+  productCreateZodSchema,
+} from "@/zodValidation/product.validation";
+import { createProductAction } from "@/services/product.service";
+
+interface RelationshipOption {
+  id: string;
+  name: string;
+  image?: string;
+}
+
+interface RelationshipPickerProps {
+  label: string;
+  value: string;
+  options: RelationshipOption[];
+  placeholder: string;
+  loading: boolean;
+  error?: boolean;
+  required?: boolean;
+  onChange: (value: string) => void;
+}
+
+function RelationshipPicker({
+  label,
+  value,
+  options,
+  placeholder,
+  loading,
+  error = false,
+  required = false,
+  onChange,
+}: RelationshipPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find((option) => option.id === value);
+
+  return (
+    <div className="relative space-y-1.5">
+      <label className="block font-bold text-slate-700 text-xs">
+        {label} {required ? "*" : ""}
+      </label>
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+        className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-left text-xs font-medium text-slate-900 outline-none transition-colors hover:bg-white focus:border-[#056D6E]"
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          {selectedOption ? (
+            <>
+              {selectedOption.image ? (
+                <img
+                  src={selectedOption.image}
+                  alt=""
+                  className="size-7 shrink-0 rounded-lg object-cover"
+                />
+              ) : (
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e7b85c] text-[10px] font-bold text-[#123b3a]">
+                  {selectedOption.name.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="truncate">{selectedOption.name}</span>
+            </>
+          ) : (
+            <span className="text-slate-400">
+              {loading ? `Loading ${label.toLowerCase()}...` : placeholder}
+            </span>
+          )}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-slate-400" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+          {!required && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setIsOpen(false);
+              }}
+              className="w-full rounded-lg px-2.5 py-2 text-left text-xs text-slate-500 hover:bg-slate-50"
+            >
+              {placeholder}
+            </button>
+          )}
+          {options.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-slate-400">
+              {loading
+                ? `Loading ${label.toLowerCase()}...`
+                : error
+                  ? `Unable to load ${label.toLowerCase()}`
+                  : `No ${label.toLowerCase()} available`}
+            </p>
+          ) : (
+            options.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  onChange(option.id);
+                  setIsOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-slate-800 hover:bg-slate-50"
+              >
+                {option.image ? (
+                  <img src={option.image} alt="" className="size-8 rounded-lg object-cover" />
+                ) : (
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-[#e7b85c] text-[10px] font-bold text-[#123b3a]">
+                    {option.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <span className="truncate">{option.name}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ProductCreateFormProps {
   baseReturnPath?: string;
 }
 
+
+export const PRODUCT_UNITS: { label: string; value: ProductUnit }[] = [
+  { label: "Piece (Pcs)", value: "PIECE" },
+  { label: "Kilogram (Kg)", value: "KG" },
+  { label: "Gram (Gm)", value: "GM" },
+  { label: "Milligram (Mg)", value: "MG" },
+  { label: "Liter (L)", value: "LITER" },
+  { label: "Milliliter (Ml)", value: "ML" },
+  { label: "Packet (Pkt)", value: "PACKET" },
+  { label: "Box", value: "BOX" },
+  { label: "Dozen (Dzn)", value: "DOZEN" },
+  { label: "Pair", value: "PAIR" },
+  { label: "Bundle", value: "BUNDLE" },
+  { label: "Bag", value: "BAG" },
+  { label: "Bottle", value: "BOTTLE" },
+  { label: "Can", value: "CAN" },
+];
+
 export function ProductCreateForm({
   baseReturnPath = "/admin/products",
 }: ProductCreateFormProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string>("");
+  const { data: categoriesResponse, isLoading: areCategoriesLoading } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: getCategoriesData,
+    staleTime: 30_000,
+  });
+  const {
+    data: brandsResponse,
+    isLoading: areBrandsLoading,
+    isError: hasBrandsError,
+  } = useQuery({
+    queryKey: ["admin-brands"],
+    queryFn: getBrandsData,
+    staleTime: 30_000,
+    refetchOnWindowFocus: "always",
+  });
+
+  const categories = Array.isArray(categoriesResponse?.data)
+    ? categoriesResponse.data.filter((category) => !category.isDeleted)
+    : [];
+  const brands = Array.isArray(brandsResponse?.data) ? brandsResponse.data : [];
+  const brandsLoadFailed = hasBrandsError || brandsResponse?.success === false;
+
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   // TanStack Mutation
-  const { mutate: createProduct, isPending: isCreating } = useMutation({
+  const { mutateAsync: createProduct, isPending: isCreating } = useMutation({
     mutationFn: createProductAction,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      // setIsSuccessModalOpen(true);
+    onSuccess: (response) => {
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+        queryClient.invalidateQueries({ queryKey: ["inventory"] });
+        setIsSuccessModalOpen(true);
+      }
     },
     onError: (error: any) => {
       const msg =
@@ -58,21 +218,19 @@ export function ProductCreateForm({
       setErrorMessage(msg);
     },
   });
-    const { mutateAsync, isPending, isSuccess } = useMutation({ mutationFn: async (payload: ILoginPayload) => createProductAction(payload,redirectPath) })
 
-
-  // TanStack Form
+  // TanStack Form (ক্যাটাগরি কম্পোনেন্টের মতো useForm হ্যান্ডলিং)
   const form = useForm({
     defaultValues: {
       title: "",
       description: "",
-      categoryId: mockCategories[0]?.id || "",
+      categoryId: "",
       brandId: "",
       costPrice: 0,
       originalPrice: 0,
       sellingPrice: 0,
       stock: 10,
-      unit: "PIECE" as ProductUnit,
+      unitType: "PIECE" as ProductUnit,
       unitValue: 1,
       isDiscounted: false,
       discountType: "PERCENTAGE" as DiscountType,
@@ -80,65 +238,57 @@ export function ProductCreateForm({
       discountExpires: "",
       supplierName: "",
       invoiceNo: "",
-    },
+      file: null as File | null,
+    } as ProductCreateFormData & { file: File | null },
     onSubmit: async ({ value }) => {
       setErrorMessage("");
 
-      if (!file) {
-        setErrorMessage("Please select a product image (file).");
+      const parsedValue = productCreateZodSchema.safeParse(value);
+      if (!parsedValue.success) {
+        setErrorMessage(parsedValue.error.issues[0]?.message || "Please check the form fields.");
         return;
       }
 
-      // FormData: 'data' এ অবজেক্ট এবং 'file' এ ইমেজ বাইনারি
+      const validValue = parsedValue.data;
+
+      // FormData প্যাটার্ন হুবহু ক্যাটাগরি কম্পোনেন্টের মতো
       const formData = new FormData();
 
       formData.append(
-        "data",
-        JSON.stringify({
-          title: value.title,
-          description: value.description || undefined,
-          categoryId: value.categoryId,
-          brandId: value.brandId || undefined,
-          costPrice: Number(value.costPrice),
-          originalPrice: Number(value.originalPrice),
-          sellingPrice: Number(value.sellingPrice),
-          stock: Number(value.stock),
-          unit: value.unit,
-          unitValue: Number(value.unitValue),
-          isDiscounted: value.isDiscounted,
-          discountType: value.isDiscounted ? value.discountType : undefined,
-          discountValue: value.isDiscounted ? Number(value.discountValue) : undefined,
-          discountExpires:
-            value.isDiscounted && value.discountExpires
-              ? new Date(value.discountExpires).toISOString()
-              : undefined,
-          supplierName: value.supplierName || undefined,
-          invoiceNo: value.invoiceNo || undefined,
-        })
-      );
+  "data",
+  JSON.stringify({
+    title: validValue.title,
+    description: validValue.description || undefined,
+    categoryId: validValue.categoryId,
+    brandId: validValue.brandId || undefined,
+    costPrice: Number(validValue.costPrice),
+    originalPrice: Number(validValue.originalPrice),
+    sellingPrice: Number(validValue.sellingPrice),
+    stock: Number(validValue.stock),
+    unitType: validValue.unitType, // ব্যাকএন্ড unitType ফিল্ড আশা করছে
+    unitValue: validValue.unitValue ? Number(validValue.unitValue) : undefined,
+    isDiscounted: validValue.isDiscounted,
+    discountType: validValue.isDiscounted ? validValue.discountType : undefined,
+    discountValue: validValue.isDiscounted ? Number(validValue.discountValue) : undefined,
+    discountExpires:
+      validValue.isDiscounted && validValue.discountExpires
+        ? new Date(validValue.discountExpires).toISOString()
+        : undefined,
+    supplierName: validValue.supplierName || undefined,
+    invoiceNo: validValue.invoiceNo || undefined,
+  })
+);
 
-      formData.append("file", file);
+      formData.append("file", validValue.file);
 
-      createProduct(formData);
+      const response = await createProduct(formData);
+      if (!response.success) {
+        setErrorMessage(response.message || "Failed to create product.");
+      }
     },
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      if (!selected.type.startsWith("image/")) {
-        setErrorMessage("Only image files are allowed!");
-        return;
-      }
-      setFile(selected);
-      setFilePreview(URL.createObjectURL(selected));
-      setErrorMessage("");
-    }
-  };
-
-
   // ── Discount & Selling Price Calculation Helper ──
-  // Discount & Selling Price Calculation Helper
   const updateSellingPrice = (
     originalPrice: number,
     isDiscounted: boolean,
@@ -180,10 +330,10 @@ export function ProductCreateForm({
         <button
           type="button"
           onClick={() => form.handleSubmit()}
-          disabled={isPending||isCreating}
+          disabled={isCreating}
           className="px-4 py-2 rounded-xl bg-[#056D6E] text-white text-xs font-bold hover:bg-[#045657] disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
         >
-          {isPending||isCreating ? (
+          {isCreating ? (
             <>
               <Loader2 className="size-3.5 animate-spin" />
               <span>Saving...</span>
@@ -210,7 +360,7 @@ export function ProductCreateForm({
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          form.handleSubmit();
+          void form.handleSubmit();
         }}
         className="grid grid-cols-1 lg:grid-cols-12 gap-6"
       >
@@ -365,7 +515,7 @@ export function ProductCreateForm({
                             className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#056D6E] outline-none cursor-pointer"
                           >
                             <option value="PERCENTAGE">PERCENTAGE (%)</option>
-                            <option value="FLAT">FLAT (৳)</option>
+                            <option value="FIXED_AMOUNT">FLAT (৳)</option>
                           </select>
                         </div>
                       )}
@@ -426,7 +576,7 @@ export function ProductCreateForm({
               />
 
               <form.Field
-                name="unit"
+                name="unitType"
                 children={(field) => (
                   <div className="space-y-1.5">
                     <label className="block font-bold text-slate-700 text-xs">
@@ -435,14 +585,13 @@ export function ProductCreateForm({
                     <select
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value as ProductUnit)}
-                      className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#056D6E] outline-none cursor-pointer"
+                      className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#056D6E] outline-none cursor-pointer transition-colors"
                     >
-                      <option value="PIECE">PIECE</option>
-                      <option value="KG">KG</option>
-                      <option value="GM">GM</option>
-                      <option value="LITER">LITER</option>
-                      <option value="ML">ML</option>
-                      <option value="BOX">BOX</option>
+                      {PRODUCT_UNITS.map((unit) => (
+                        <option key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 )}
@@ -500,45 +649,59 @@ export function ProductCreateForm({
 
         {/* Right Side: File Upload & Relationships */}
         <div className="lg:col-span-4 space-y-5">
-          {/* File Upload (MultiPart 'file') */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Product Image (File) *
-            </h2>
+          {/* File Upload (MultiPart 'file') handled via form.Field */}
+          <form.Field
+            name="file"
+            children={(field) => (
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Product Image (File) *
+                </h2>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            {!filePreview ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-200 hover:border-[#056D6E] rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50"
-              >
-                <Upload className="size-6 text-[#056D6E] mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-800">Select Image File</p>
-                <p className="text-[10px] text-slate-400 mt-1">MultiPart: key = "file"</p>
-              </div>
-            ) : (
-              <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-square group">
-                <img src={filePreview} alt="Preview" className="size-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFile(null);
-                    setFilePreview("");
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const selected = e.target.files?.[0] ?? null;
+                    if (selected && !selected.type.startsWith("image/")) {
+                      setErrorMessage("Only image files are allowed!");
+                      return;
+                    }
+                    field.handleChange(selected);
+                    setImagePreview(selected ? URL.createObjectURL(selected) : "");
+                    setErrorMessage("");
                   }}
-                  className="absolute top-2 right-2 size-7 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md cursor-pointer hover:bg-rose-700"
-                >
-                  <X className="size-4" />
-                </button>
+                  className="hidden"
+                />
+
+                {!imagePreview ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-200 hover:border-[#056D6E] rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50"
+                  >
+                    <Upload className="size-6 text-[#056D6E] mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-800">Select Image File</p>
+                    <p className="text-[10px] text-slate-400 mt-1">MultiPart: key = "file"</p>
+                  </div>
+                ) : (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-square group">
+                    <img src={imagePreview} alt="Preview" className="size-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        field.handleChange(null);
+                        setImagePreview("");
+                      }}
+                      className="absolute top-2 right-2 size-7 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md cursor-pointer hover:bg-rose-700"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          />
 
           {/* Relations: Category & Brand */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
@@ -549,45 +712,39 @@ export function ProductCreateForm({
             <form.Field
               name="categoryId"
               children={(field) => (
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700 text-xs">
-                    Category *
-                  </label>
-                  <select
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#056D6E] outline-none cursor-pointer"
-                  >
-                    {mockCategories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <RelationshipPicker
+                  label="Category"
+                  value={field.state.value}
+                  options={categories.map((category) => ({
+                    id: category.id,
+                    name: category.name,
+                    image: category.logo,
+                  }))}
+                  placeholder="Select a category"
+                  loading={areCategoriesLoading}
+                  required
+                  onChange={field.handleChange}
+                />
               )}
             />
 
             <form.Field
               name="brandId"
               children={(field) => (
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700 text-xs">
-                    Brand
-                  </label>
-                  <select
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#056D6E] outline-none cursor-pointer"
-                  >
-                    <option value="">No Brand</option>
-                    {mockBrands.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <RelationshipPicker
+                  label="Brand"
+                  value={field.state.value}
+                  options={brands.map((brand) => ({
+                    id: brand.id,
+                    name: brand.name,
+                    image: brand.logo,
+                  }))}
+                  placeholder="Select a brand"
+                  loading={areBrandsLoading}
+                  error={brandsLoadFailed}
+                  required
+                  onChange={field.handleChange}
+                />
               )}
             />
           </div>
@@ -595,10 +752,10 @@ export function ProductCreateForm({
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isCreating}
             className="w-full py-3 rounded-xl bg-[#056D6E] text-white text-xs font-bold hover:bg-[#045657] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
           >
-            {isPending||isCreating ? (
+            {isCreating ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 <span>Sending Multipart Data...</span>
@@ -630,8 +787,7 @@ export function ProductCreateForm({
                 onClick={() => {
                   setIsSuccessModalOpen(false);
                   form.reset();
-                  setFile(null);
-                  setFilePreview("");
+                  setImagePreview("");
                 }}
                 className="py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700"
               >

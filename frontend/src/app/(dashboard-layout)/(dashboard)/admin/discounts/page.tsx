@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
 import { mockCoupons, Coupon } from "@/lib/mock-data";
 import {
@@ -13,7 +12,8 @@ import {
 } from "lucide-react";
 
 export default function DiscountsPage() {
-  const { hasManagerAccess, role } = useRole();
+  const hasManagerAccess = true;
+  const role = "ADMIN";
   const [coupons, setCoupons] = useState<Coupon[]>(mockCoupons);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);

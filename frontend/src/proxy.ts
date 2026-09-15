@@ -58,6 +58,7 @@ export async function proxy(request: NextRequest) {
 
     userRole = unifySuperAdminAndAdminRole;
 
+
     const isAuth = isAuthRoute(pathname);
 
     //proactively refresh token if refresh token exists and access token is expired or about to expire

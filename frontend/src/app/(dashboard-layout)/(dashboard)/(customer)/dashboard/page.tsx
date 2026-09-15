@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRole } from "@/context/role-context";
 import { AccessDenied } from "@/components/common/access-denied";
 import { RevenueChart } from "@/components/modules/dashboard/revenue-chart";
 import { OrderStatusDonut } from "@/components/modules/dashboard/order-status-donut";
@@ -18,7 +17,7 @@ import {
 import { StatCard } from "@/components/modules/dashboard/stat-card";
 
 export default function CustomerDashboardPage() {
-  const { hasManagerAccess } = useRole();
+  const hasManagerAccess = true;
   const [orders] = useState<Order[]>(mockOrders);
 
   if (!hasManagerAccess) {

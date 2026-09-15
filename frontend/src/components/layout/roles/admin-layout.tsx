@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { DashboardLayout } from "../dashboard-layout";
-import { useRole } from "@/context/role-context";
+import React from "react";
+import { DashboardLayout as BaseDashboardLayout } from "../dashboard-layout";
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
 
 
-  return <DashboardLayout>
+  return <BaseDashboardLayout>
 
     {children}
-  </DashboardLayout>;
+  </BaseDashboardLayout>;
 }

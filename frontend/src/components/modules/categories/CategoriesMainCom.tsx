@@ -1,18 +1,9 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Image from "next/image";
 import { useForm } from "@tanstack/react-form";
-import { useRole } from "@/context/role-context";
-import { mockCategories, Category } from "@/lib/mock-data";
-import {
-  Search,
-  Plus,
-  Edit2,
-  Trash2,
-  FolderTree,
-  Lock,
-  Layers,
-} from "lucide-react";
+import { Plus, FolderTree, Lock, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   categoryDelete as categoryDeleteAction,
@@ -20,14 +11,13 @@ import {
   createCategoryData,
   getCategoriesData,
 } from "@/services/categories.service";
-import { ICategoryData } from "@/types/dashboard.types";
 import { DataTable } from "@/shared/table/DataTable";
-import { categoryColumns } from "./categoryCoumn";
+import { categoryColumns, ICategoryData } from "./categoryCoumn";
 import AppField from "@/shared/AppFeild";
 import {
   categoryCreateZodSchema,
   categoryUpdateZodSchema,
-  CategoryCreateFormData,
+  type CategoryCreateFormData,
 } from "@/zodValidation/category.validation";
 import {
   AlertDialog,
@@ -46,18 +36,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-// import { CategoryTable, ICategoryData } from "@/shared/table/DataTable";
 
 export default function CategoriesMainCom() {
-  
+  const queryClient = useQueryClient();
+  const [formError, setFormError] = useState("");
+  const [logoPreview, setLogoPreview] = useState("");
+
   const { data: categoryResponse, isLoading } = useQuery({
     queryKey: ["admin-categories"],
     queryFn: getCategoriesData,
     refetchOnWindowFocus: "always",
   });
-  const queryClient = useQueryClient();
-  const [formError, setFormError] = useState("");
-  const [logoPreview, setLogoPreview] = useState("");
+
   const { mutateAsync: createCategory, isPending: isCreating } = useMutation({
     mutationFn: createCategoryData,
   });
@@ -68,36 +58,39 @@ export default function CategoriesMainCom() {
     mutationFn: categoryDeleteAction,
   });
 
-  const categoriesList = Array.isArray(categoryResponse?.data)
-    ? categoryResponse.data
+  const categoriesList: ICategoryData[] = Array.isArray(categoryResponse?.data)
+    ? (categoryResponse.data as unknown as ICategoryData[])
     : [];
+
   const [deletedCategoryIds, setDeletedCategoryIds] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
   const [categoryTableUpdates, setCategoryTableUpdates] = useState<
     Record<string, Partial<ICategoryData>>
   >({});
-  const tableCategories = useMemo<ICategoryData[]>(
-    () =>
-      categoriesList.map((category) => ({
-        id: category.id,
+
+  const tableCategories = useMemo<ICategoryData[]>(() => {
+    return categoriesList
+      .map((category) => ({
+        ...category,
         name: categoryTableUpdates[category.id]?.name ?? category.name,
         logo: categoryTableUpdates[category.id]?.logo ?? category.logo ?? "",
-        isDeleted: category.isDeleted ?? false,
-        createdAt: "",
-        updatedAt: "",
-        ...categoryTableUpdates[category.id],
-      })).filter((category) => !deletedCategoryIds.has(category.id)),
-    [categoriesList, categoryTableUpdates, deletedCategoryIds],
-  );
-  const { hasManagerAccess, role } = useRole();
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
-  const [searchQuery, setSearchQuery] = useState("");
+        isDeleted:
+          categoryTableUpdates[category.id]?.isDeleted ??
+          category.isDeleted ??
+          false,
+        createdAt: category.createdAt ?? "",
+        updatedAt: category.updatedAt ?? "",
+      }))
+      .filter((category) => !deletedCategoryIds.has(category.id));
+  }, [categoriesList, categoryTableUpdates, deletedCategoryIds]);
 
+  const hasManagerAccess = true;
+  const role = "ADMIN";
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingCategory, setEditingCategory] = useState<ICategoryData | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
@@ -105,8 +98,8 @@ export default function CategoriesMainCom() {
   const form = useForm({
     defaultValues: {
       name: "",
-      logo: null,
-    } satisfies CategoryCreateFormData,
+      logo: null as unknown as File | null,
+    } as CategoryCreateFormData,
     onSubmit: async ({ value }) => {
       setFormError("");
       const categorySlug = value.name
@@ -122,7 +115,7 @@ export default function CategoriesMainCom() {
             id: editingCategory.id,
             name: value.name,
             slug: categorySlug,
-          }),
+          })
         );
         if (value.logo instanceof File) {
           requestData.append("file", value.logo);
@@ -134,25 +127,21 @@ export default function CategoriesMainCom() {
           return;
         }
 
-        const nextImage = value.logo instanceof File
-          ? URL.createObjectURL(value.logo)
-          : editingCategory.image;
+        const nextImage =
+          value.logo instanceof File
+            ? URL.createObjectURL(value.logo)
+            : editingCategory.logo;
 
-        setCategories((currentCategories) =>
-          currentCategories.map((category) =>
-            category.id === editingCategory.id
-              ? { ...category, name: value.name, image: nextImage }
-              : category,
-          ),
-        );
         setCategoryTableUpdates((currentUpdates) => ({
           ...currentUpdates,
           [editingCategory.id]: { name: value.name, logo: nextImage },
         }));
         await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       } else {
-        if (!(value.logo instanceof File)) return;
-        const uploadedImagePreview = URL.createObjectURL(value.logo);
+        if (!(value.logo instanceof File)) {
+          setFormError("Please select a category image.");
+          return;
+        }
 
         const requestData = new FormData();
         requestData.append(
@@ -160,7 +149,7 @@ export default function CategoriesMainCom() {
           JSON.stringify({
             name: value.name,
             slug: categorySlug,
-          }),
+          })
         );
         requestData.append("file", value.logo);
 
@@ -171,40 +160,27 @@ export default function CategoriesMainCom() {
         }
 
         await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-        const newCat: Category = {
-          id: `cat-${Date.now()}`,
-          name: value.name,
-          slug: categorySlug,
-          image: uploadedImagePreview,
-          description: "",
-          productCount: 0,
-          isActive: true,
-          status: "Active",
-          createdAt: new Date().toISOString().split("T")[0],
-        };
-        setCategories((currentCategories) => [newCat, ...currentCategories]);
       }
 
       setIsModalOpen(false);
     },
   });
 
-  
   const handleOpenAddModal = () => {
     setFormError("");
     setEditingCategory(null);
     form.setFieldValue("name", "");
-    form.setFieldValue("logo", null);
+    form.setFieldValue("logo");
     setLogoPreview("");
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (cat: Category) => {
+  const handleOpenEditModal = (cat: ICategoryData) => {
     setFormError("");
     setEditingCategory(cat);
     form.setFieldValue("name", cat.name);
-    form.setFieldValue("logo", null);
-    setLogoPreview(cat.image);
+    form.setFieldValue("logo");
+    setLogoPreview(cat.logo || "");
     setIsModalOpen(true);
   };
 
@@ -222,9 +198,6 @@ export default function CategoriesMainCom() {
       return;
     }
 
-    setCategories((currentCategories) =>
-      currentCategories.filter((category) => category.id !== categoryToDelete),
-    );
     setDeletedCategoryIds((currentIds) => {
       const nextIds = new Set(currentIds);
       nextIds.add(categoryToDelete);
@@ -233,21 +206,6 @@ export default function CategoriesMainCom() {
     await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
     setCategoryToDelete(null);
   };
-
-  const toggleCategoryStatus = (id: string) => {
-    setCategories(
-      categories.map((c) =>
-        c.id === id ? { ...c, status: c.status === "Active" ? "Disabled" : "Active" } : c
-      )
-    );
-  };
-
-  const filteredCategories = categories.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div>
@@ -267,6 +225,7 @@ export default function CategoriesMainCom() {
 
           {hasManagerAccess ? (
             <button
+              type="button"
               onClick={handleOpenAddModal}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-xs transition-all cursor-pointer self-start sm:self-auto"
             >
@@ -281,42 +240,23 @@ export default function CategoriesMainCom() {
           )}
         </div>
 
-
-
-
-          <DataTable
-            columns={categoryColumns}
-            data={tableCategories}
-            isLoading={isLoading}
-            actions={{
-              onEdit: hasManagerAccess
-                ? (category) => {
-                    const existingCategory = categories.find(
-                      (item) => item.id === category.id,
-                    ) ?? {
-                      id: category.id,
-                      name: category.name,
-                      slug: category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-                      description: "",
-                      image: category.logo,
-                      productCount: 0,
-                      isActive: !category.isDeleted,
-                      status: category.isDeleted ? "Disabled" : "Active",
-                    };
-                    handleOpenEditModal(existingCategory);
-                  }
-                : undefined,
-              onDelete: hasManagerAccess
-                ? (category) => handleDeleteCategory(category.id)
-                : undefined,
-            }}
-          />
-
-
+        <DataTable
+          columns={categoryColumns}
+          data={tableCategories}
+          isLoading={isLoading}
+          actions={{
+            onEdit: hasManagerAccess
+              ? (category) => handleOpenEditModal(category)
+              : undefined,
+            onDelete: hasManagerAccess
+              ? (category) => handleDeleteCategory(category.id)
+              : undefined,
+          }}
+        />
 
         <Sheet open={isModalOpen} onOpenChange={setIsModalOpen}>
           <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-            <SheetHeader className="border-b border-slate-100">
+            <SheetHeader className="border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <FolderTree className="size-4 text-slate-700" />
                 <SheetTitle>
@@ -330,53 +270,59 @@ export default function CategoriesMainCom() {
               </SheetDescription>
             </SheetHeader>
 
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  void form.handleSubmit();
-                }}
-                className="space-y-3 px-4 text-xs"
-              >
-                {formError && (
-                  <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-600">
-                    {formError}
-                  </p>
-                )}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                void form.handleSubmit();
+              }}
+              className="space-y-4 px-1 py-4 text-xs"
+            >
+              {formError && (
+                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-600">
+                  {formError}
+                </p>
+              )}
 
-                <div>
-                  <form.Field
-                    name="name"
-                    validators={{
-                      onChange: categoryCreateZodSchema.shape.name,
-                      onSubmit: categoryCreateZodSchema.shape.name,
-                    }}
-                  >
-                    {(field) => (
-                      <AppField
-                        field={field}
-                        label="Category Name *"
-                        placeholder="e.g. Mens Ethnic Wear"
-                      />
-                    )}
-                  </form.Field>
-                </div>
+              <div>
+                <form.Field
+                  name="name"
+                  validators={{
+                    onChange: ({ value }) => {
+                      const res = categoryCreateZodSchema.shape.name.safeParse(value);
+                      return res.success ? undefined : res.error.issues[0]?.message;
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <AppField
+                      field={field}
+                      label="Category Name *"
+                      placeholder="e.g. Mens Ethnic Wear"
+                    />
+                  )}
+                </form.Field>
+              </div>
 
+              <div>
                 <form.Field
                   name="logo"
                   validators={{
-                    onChange: editingCategory
-                      ? categoryUpdateZodSchema.shape.logo
-                      : categoryCreateZodSchema.shape.logo,
-                    onSubmit: editingCategory
-                      ? categoryUpdateZodSchema.shape.logo
-                      : categoryCreateZodSchema.shape.logo,
+                    onChange: ({ value }) => {
+                      const schema = editingCategory
+                        ? categoryUpdateZodSchema.shape.logo
+                        : categoryCreateZodSchema.shape.logo;
+                      const res = schema.safeParse(value);
+                      return res.success ? undefined : res.error.issues[0]?.message;
+                    },
                   }}
                 >
                   {(field) => (
                     <div>
-                      <label className="mb-1 block font-semibold text-slate-700">Category Image *</label>
-                      <div className="flex gap-2">
+                      <label className="mb-1 block font-semibold text-slate-700">
+                        Category Image {!editingCategory && "*"}
+                      </label>
+                      <div className="flex items-center gap-3">
                         <div className="min-w-0 flex-1">
                           <input
                             id="logo"
@@ -393,38 +339,48 @@ export default function CategoriesMainCom() {
                           />
                         </div>
                         {logoPreview && (
-                          <img
-                            src={logoPreview}
-                            alt="Logo preview"
-                            className="size-8.5 shrink-0 rounded-lg border border-slate-200 object-cover"
-                          />
+                          <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                            <Image
+                              src={logoPreview}
+                              alt="Logo preview"
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
                         )}
                       </div>
                     </div>
                   )}
                 </form.Field>
+              </div>
 
-                <div className="pt-2 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreating || isUpdating}
-                    className="flex-1 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 cursor-pointer"
-                  >
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating || isUpdating}
+                  className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+                >
+                  {(isCreating || isUpdating) && (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  )}
+                  <span>
                     {isCreating || isUpdating
                       ? "Uploading..."
                       : editingCategory
-                        ? "Update Category"
-                        : "Create Category"}
-                  </button>
-                </div>
-              </form>
+                      ? "Update Category"
+                      : "Create Category"}
+                  </span>
+                </button>
+              </div>
+            </form>
           </SheetContent>
         </Sheet>
 
@@ -438,10 +394,8 @@ export default function CategoriesMainCom() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete category?</AlertDialogTitle>
               <AlertDialogDescription>
-                {deleteError || (
-                  "This category will be removed from the list. Products in this " +
-                  "category will become unassigned."
-                )}
+                {deleteError ||
+                  "This category will be removed from the list. Products in this category will become unassigned."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
