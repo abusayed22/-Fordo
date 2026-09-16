@@ -10,7 +10,7 @@ export default async function ManualOrderOrdersPage() {
   const userInfo = await getUserInfo();
   return (
   <div>
-    <OrdersList userRole={userInfo.role}/>
+    <OrdersList userRole={userInfo?.role}/>
   </div>
   );
 }
