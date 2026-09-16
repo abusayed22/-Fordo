@@ -74,7 +74,7 @@ export default function CategoriesMainCom() {
       .map((category) => ({
         ...category,
         name: categoryTableUpdates[category.id]?.name ?? category.name,
-        logo: categoryTableUpdates[category.id]?.logo ?? category.logo ?? "",
+        logo: categoryTableUpdates[category.id]?.logo ?? category.logo ?? null,
         isDeleted:
           categoryTableUpdates[category.id]?.isDeleted ??
           category.isDeleted ??
@@ -170,7 +170,7 @@ export default function CategoriesMainCom() {
     setFormError("");
     setEditingCategory(null);
     form.setFieldValue("name", "");
-    form.setFieldValue("logo");
+    form.setFieldValue("logo", null as unknown as File);
     setLogoPreview("");
     setIsModalOpen(true);
   };
@@ -179,7 +179,7 @@ export default function CategoriesMainCom() {
     setFormError("");
     setEditingCategory(cat);
     form.setFieldValue("name", cat.name);
-    form.setFieldValue("logo");
+    form.setFieldValue("logo", null as unknown as File);
     setLogoPreview(cat.logo || "");
     setIsModalOpen(true);
   };
@@ -332,7 +332,7 @@ export default function CategoriesMainCom() {
                             onBlur={field.handleBlur}
                             onChange={(event) => {
                               const file = event.target.files?.[0] ?? null;
-                              field.handleChange(file);
+                              field.handleChange(null as unknown as File );
                               setLogoPreview(file ? URL.createObjectURL(file) : "");
                             }}
                             className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-[#123b3a] file:px-2.5 file:py-1.5 file:text-[11px] file:font-semibold file:text-white"
@@ -375,8 +375,8 @@ export default function CategoriesMainCom() {
                     {isCreating || isUpdating
                       ? "Uploading..."
                       : editingCategory
-                      ? "Update Category"
-                      : "Create Category"}
+                        ? "Update Category"
+                        : "Create Category"}
                   </span>
                 </button>
               </div>

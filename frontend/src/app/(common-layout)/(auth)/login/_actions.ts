@@ -10,7 +10,7 @@ import { ILoginPayload, loginZodSchema } from "@/zodValidation/auth.validation";
 import { redirect } from "next/navigation";
 
 
-export const loginAction = async (payload: ILoginPayload,redirectPath?:string): Promise<ApiResponse | ApiErrorResponse> => {
+export const loginAction = async (payload: ILoginPayload, redirectPath?: string): Promise<ApiResponse | ApiErrorResponse> => {
     const parsedPayload = loginZodSchema.safeParse(payload);
     if (!parsedPayload.success) {
         const firstError = parsedPayload.error.issues[0];
@@ -19,24 +19,33 @@ export const loginAction = async (payload: ILoginPayload,redirectPath?:string): 
             message: firstError.message,
         }
     }
+
+
     try {
         const response = await httpClient.post<ILoginResponse>("/auth/login", parsedPayload.data);
-        const { accessToken, refreshToken, token, user } = response.data;
-        const {role, emailVerified, needPasswordChange, email} = user;
+        const data = response.data
+        if (!data) {
+            return {
+                success: false,
+                message: "No login data received from server",
+            };
+        }
+        const { accessToken, refreshToken, token, user } = data;
+        const { role, emailVerified, needPasswordChange, email } = user;
 
         await setTokenInCookie("accessToken", accessToken);
         await setTokenInCookie("refreshToken", refreshToken);
         await setTokenInCookie("better-auth.session_token", token, 24 * 60 * 60);
 
-        
-        if(needPasswordChange){
+
+        if (needPasswordChange) {
             //TODO: refactoring
             redirect(`/reset-password?email=${email}`);
-        }else{
+        } else {
             // redirect(redirectPath || "/dashboard");
             const targetPath = redirectPath && isValidRedirectForRole(redirectPath, role as UserRole) ? redirectPath : getDefaultDashboardRoute(role as UserRole);
 
-            
+
             redirect(targetPath);
         }
 

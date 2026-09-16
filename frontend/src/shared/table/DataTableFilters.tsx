@@ -190,9 +190,12 @@ const SingleSelectFilterControl = ({
       <Select
         value={value || "all"}
         onValueChange={(nextValue) => {
-          onFilterChange(filter.id, nextValue === "all" ? undefined : nextValue);
+          const resolvedValue =
+      !nextValue || nextValue === "all" ? undefined : nextValue;
+
+    onFilterChange(filter.id, resolvedValue);
         }}
-      >
+        >
         <SelectTrigger disabled={isLoading}>
           <SelectValue placeholder={filter.label} />
         </SelectTrigger>

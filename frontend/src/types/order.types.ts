@@ -29,6 +29,15 @@ export interface ICreatedOrderItem {
   };
 }
 
+export interface ApiErrorResponse {
+  success: false;
+  message: string;
+  data?: null;
+  errorMessages?: Array<{ path: string | number; message: string }>;
+  stack?: string;
+}
+
+
 export interface ICreateOrderResponseData {
   id: string;
   orderNumber: string;

@@ -39,8 +39,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-export default function BrandMainComp() {
-  
+
+
+interface IBrandMainComp {
+  role: string
+}
+
+
+export default function BrandMainComp({ role }: IBrandMainComp) {
+
   const { data: brandResponse, isLoading } = useQuery({
     queryKey: ["admin-brands"],
     queryFn: getBrandsData,
@@ -80,7 +87,7 @@ export default function BrandMainComp() {
     [brandList, brandTableUpdates, deletedBrandIds],
   );
   const hasManagerAccess = true;
-  const role = "ADMIN";
+
 
 
   // Modal State
@@ -89,11 +96,13 @@ export default function BrandMainComp() {
   const [brandToDelete, setBrandToDelete] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
+
+
   // Form State
   const form = useForm({
     defaultValues: {
       name: "",
-      logo: null,
+      logo: null as unknown as File,
     } satisfies BrandCreateFormData,
     onSubmit: async ({ value }) => {
       setFormError("");
@@ -153,15 +162,15 @@ export default function BrandMainComp() {
       }
 
       setIsModalOpen(false);
-    },
-  });
+    }
+  })
 
-  
+
   const handleOpenAddModal = () => {
     setFormError("");
     setEditingBrand(null);
     form.setFieldValue("name", "");
-    form.setFieldValue("logo", null);
+    form.setFieldValue("logo", null as unknown as File);
     setLogoPreview("");
     setIsModalOpen(true);
   };
@@ -170,7 +179,7 @@ export default function BrandMainComp() {
     setFormError("");
     setEditingBrand(brand);
     form.setFieldValue("name", brand.name);
-    form.setFieldValue("logo", null);
+    form.setFieldValue("logo", null as unknown as File);
     setLogoPreview(brand.logo);
     setIsModalOpen(true);
   };
@@ -233,21 +242,21 @@ export default function BrandMainComp() {
 
 
 
-          <DataTable
-            columns={brandColumns}
-            data={tableBrands}
-            isLoading={isLoading}
-            actions={{
-              onEdit: hasManagerAccess
-                ? (brand) => {
-                    handleOpenEditModal(brand);
-                  }
-                : undefined,
-              onDelete: hasManagerAccess
-                ? (brand) => handleDeleteBrand(brand.id)
-                : undefined,
-            }}
-          />
+        <DataTable
+          columns={brandColumns}
+          data={tableBrands}
+          isLoading={isLoading}
+          actions={{
+            onEdit: hasManagerAccess
+              ? (brand) => {
+                handleOpenEditModal(brand);
+              }
+              : undefined,
+            onDelete: hasManagerAccess
+              ? (brand) => handleDeleteBrand(brand.id)
+              : undefined,
+          }}
+        />
 
 
 
@@ -255,7 +264,7 @@ export default function BrandMainComp() {
           <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
             <SheetHeader className="border-b border-slate-100">
               <div className="flex items-center gap-2">
-                  <Award className="size-4 text-slate-700" />
+                <Award className="size-4 text-slate-700" />
                 <SheetTitle>
                   {editingBrand ? "Edit Brand" : "Add New Brand"}
                 </SheetTitle>
@@ -267,101 +276,109 @@ export default function BrandMainComp() {
               </SheetDescription>
             </SheetHeader>
 
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  void form.handleSubmit();
-                }}
-                className="space-y-3 px-4 text-xs"
-              >
-                {formError && (
-                  <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-600">
-                    {formError}
-                  </p>
-                )}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                void form.handleSubmit();
+              }}
+              className="space-y-3 px-4 text-xs"
+            >
+              {formError && (
+                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-600">
+                  {formError}
+                </p>
+              )}
 
-                <div>
-                  <form.Field
-                    name="name"
-                    validators={{
-                      onChange: brandCreateZodSchema.shape.name,
-                      onSubmit: brandCreateZodSchema.shape.name,
-                    }}
-                  >
-                    {(field) => (
-                      <AppField
-                        field={field}
-                        label="Brand Name *"
-                        placeholder="e.g. Mens Ethnic Wear"
-                      />
-                    )}
-                  </form.Field>
-                </div>
-
+              <div>
                 <form.Field
-                  name="logo"
+                  name="name"
                   validators={{
-                    onChange: editingBrand
-                      ? brandUpdateZodSchema.shape.logo
-                      : brandCreateZodSchema.shape.logo,
-                    onSubmit: editingBrand
-                      ? brandUpdateZodSchema.shape.logo
-                      : brandCreateZodSchema.shape.logo,
+                    onChange: brandCreateZodSchema.shape.name,
+                    onSubmit: brandCreateZodSchema.shape.name,
                   }}
                 >
                   {(field) => (
-                    <div>
-                      <label className="mb-1 block font-semibold text-slate-700">Brand Logo *</label>
-                      <div className="flex gap-2">
-                        <div className="min-w-0 flex-1">
-                          <input
-                            id="logo"
-                            name="logo"
-                            type="file"
-                            accept="image/*"
-                            onBlur={field.handleBlur}
-                            onChange={(event) => {
-                              const file = event.target.files?.[0] ?? null;
-                              field.handleChange(file);
-                              setLogoPreview(file ? URL.createObjectURL(file) : "");
-                            }}
-                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-[#123b3a] file:px-2.5 file:py-1.5 file:text-[11px] file:font-semibold file:text-white"
-                          />
-                        </div>
-                        {logoPreview && (
-                          <img
-                            src={logoPreview}
-                            alt="Logo preview"
-                            className="size-8.5 shrink-0 rounded-lg border border-slate-200 object-cover"
-                          />
-                        )}
-                      </div>
-                    </div>
+                    <AppField
+                      field={field}
+                      label="Brand Name *"
+                      placeholder="e.g. Mens Ethnic Wear"
+                    />
                   )}
                 </form.Field>
+              </div>
 
-                <div className="pt-2 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isCreating || isUpdating}
-                    className="flex-1 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 cursor-pointer"
-                  >
-                    {isCreating || isUpdating
-                      ? "Uploading..."
-                      : editingBrand
-                        ? "Update Brand"
-                        : "Create Brand"}
-                  </button>
-                </div>
-              </form>
+              <form.Field
+                name="logo"
+                validators={{
+                  onChange: ({ value }) => {
+                    const schema = editingBrand
+                      ? brandUpdateZodSchema.shape.logo
+                      : brandCreateZodSchema.shape.logo;
+                    const result = schema.safeParse(value);
+                    return result.success ? undefined : result.error.issues[0]?.message;
+                  },
+                  onSubmit: ({ value }) => {
+                    const schema = editingBrand
+                      ? brandUpdateZodSchema.shape.logo
+                      : brandCreateZodSchema.shape.logo;
+                    const result = schema.safeParse(value);
+                    return result.success ? undefined : result.error.issues[0]?.message;
+                  },
+                }}
+              >
+                {(field) => (
+                  <div>
+                    <label className="mb-1 block font-semibold text-slate-700">Brand Logo *</label>
+                    <div className="flex gap-2">
+                      <div className="min-w-0 flex-1">
+                        <input
+                          id="logo"
+                          name="logo"
+                          type="file"
+                          accept="image/*"
+                          onBlur={field.handleBlur}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            field.handleChange(file as unknown as File);
+                            setLogoPreview(file ? URL.createObjectURL(file) : "");
+                          }}
+                          className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-[#123b3a] file:px-2.5 file:py-1.5 file:text-[11px] file:font-semibold file:text-white"
+                        />
+                      </div>
+                      {logoPreview && (
+                        <img
+                          src={logoPreview}
+                          alt="Logo preview"
+                          className="size-8.5 shrink-0 rounded-lg border border-slate-200 object-cover"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </form.Field>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating || isUpdating}
+                  className="flex-1 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 cursor-pointer"
+                >
+                  {isCreating || isUpdating
+                    ? "Uploading..."
+                    : editingBrand
+                      ? "Update Brand"
+                      : "Create Brand"}
+                </button>
+              </div>
+            </form>
           </SheetContent>
         </Sheet>
 
@@ -376,8 +393,8 @@ export default function BrandMainComp() {
               <AlertDialogTitle>Delete brand?</AlertDialogTitle>
               <AlertDialogDescription>
                 {deleteError || (
-                    "This brand will be removed from the list. Products using this " +
-                    "brand will become unassigned."
+                  "This brand will be removed from the list. Products using this " +
+                  "brand will become unassigned."
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>

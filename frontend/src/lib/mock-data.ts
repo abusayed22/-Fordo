@@ -30,7 +30,7 @@ export interface Product {
   isFeatured: boolean;
   tags: string[];
   sizes?: string[];
-  colors?: string[];
+  // colors?: string[];
   createdAt: string;
 }
 
@@ -74,7 +74,7 @@ export interface OrderItem {
   size?: string;
   image?: string;
   selectedSize?: string;
-  selectedColor?: string;
+  // selectedColor?: string;
 }
 
 export interface Order {
@@ -326,7 +326,7 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["eid", "premium", "panjabi"],
     sizes: ["S", "M", "L", "XL", "XXL"],
-    colors: ["Midnight Blue", "Ivory", "Black"],
+    // colors: ["Midnight Blue", "Ivory", "Black"],
     createdAt: "2024-08-01T00:00:00Z",
   },
   {
@@ -354,7 +354,7 @@ export const mockProducts: Product[] = [
     isActive: true,
     isFeatured: true,
     tags: ["silk", "saree", "premium"],
-    colors: ["Royal Gold", "Deep Maroon"],
+    // colors: ["Royal Gold", "Deep Maroon"],
     createdAt: "2024-08-05T00:00:00Z",
   },
   {
@@ -382,7 +382,7 @@ export const mockProducts: Product[] = [
     isActive: true,
     isFeatured: false,
     tags: ["leather", "wallet", "accessories"],
-    colors: ["Brown", "Black"],
+    // colors: ["Brown", "Black"],
     createdAt: "2024-08-10T00:00:00Z",
   },
   {
@@ -411,7 +411,7 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["casual", "shirt", "cotton"],
     sizes: ["S", "M", "L", "XL"],
-    colors: ["Olive Green", "Sky Blue", "White"],
+    // colors: ["Olive Green", "Sky Blue", "White"],
     createdAt: "2024-08-12T00:00:00Z",
   },
   {
@@ -440,7 +440,7 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["sneakers", "footwear", "urban"],
     sizes: ["39", "40", "41", "42", "43", "44"],
-    colors: ["Urban Grey", "Black", "White"],
+    // colors: ["Urban Grey", "Black", "White"],
     createdAt: "2024-08-15T00:00:00Z",
   },
   {
@@ -469,7 +469,7 @@ export const mockProducts: Product[] = [
     isFeatured: false,
     tags: ["formal", "blazer", "premium"],
     sizes: ["M", "L", "XL", "XXL"],
-    colors: ["Charcoal", "Navy"],
+    // colors: ["Charcoal", "Navy"],
     createdAt: "2024-08-18T00:00:00Z",
   },
   {
@@ -498,7 +498,7 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["kurti", "floral", "women"],
     sizes: ["S", "M", "L", "XL"],
-    colors: ["Multi", "Blue Floral", "Pink Floral"],
+    // colors: ["Multi", "Blue Floral", "Pink Floral"],
     createdAt: "2024-08-20T00:00:00Z",
   },
   {
@@ -526,7 +526,7 @@ export const mockProducts: Product[] = [
     isActive: true,
     isFeatured: true,
     tags: ["electronics", "earbuds", "wireless"],
-    colors: ["Matte Black", "Pearl White"],
+    // colors: ["Matte Black", "Pearl White"],
     createdAt: "2024-08-22T00:00:00Z",
   },
 ];

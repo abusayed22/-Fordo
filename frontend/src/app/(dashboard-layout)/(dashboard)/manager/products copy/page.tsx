@@ -94,21 +94,33 @@ export default function ProductsPage() {
       );
     } else {
       const newProd: Product = {
-        id: `prod-${Date.now()}`,
-        name,
-        sku,
-        category,
-        brand,
-        image,
-        regularPrice: Number(regularPrice),
-        salePrice: Number(salePrice),
-        stock: Number(stock),
-        lowStockThreshold: 5,
-        status: statusVal,
-        vendor: brand || "Pordo Atelier",
-        sizes: ["M", "L", "XL"],
-        colors: ["Standard"],
-      };
+  id: `prod-${Date.now()}`,
+  name,
+  slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+  description: "",
+  price: Number(salePrice) || Number(regularPrice) || 0,
+  costPrice: 0,
+  regularPrice: Number(regularPrice),
+  salePrice: Number(salePrice),
+  stock: Number(stock),
+  unit: "PIECE",
+  sku,
+  categoryId: "",
+  category,
+  brandId: "",
+  brand,
+  vendor: brand || "Pordo Atelier",
+  status: statusVal,
+  image,
+  images: image ? [image] : [],
+  rating: 0,
+  reviewCount: 0,
+  isActive: true,
+  isFeatured: false,
+  tags: [],
+  sizes: ["M", "L", "XL"],
+  createdAt: new Date().toISOString(),
+};
       setProducts([newProd, ...products]);
     }
 

@@ -13,15 +13,19 @@ import {
   Lock,
 } from "lucide-react";
 
-export default function ProductsMainComp() {
+
+interface IProductMainParams {
+  role: 'stirng'
+}
+
+export default function ProductsMainComp({ role }: IProductMainParams) {
   const hasManagerAccess = true;
-  const role = "ADMIN";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const { data: productsResponse, isLoading, isError } = useQuery({
     queryKey: ["admin-products"],
-    queryFn: getProductsData,
+    queryFn: () => getProductsData(),
     staleTime: 30_000,
   });
   const { data: categoriesResponse } = useQuery({
@@ -69,6 +73,44 @@ export default function ProductsMainComp() {
       (brand?.name || product.brandId).toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesSearch;
   });
+
+
+
+  // helper function
+  const getProductImageUrl = (image: unknown): string => {
+    if (!image) return "/placeholder-product.jpg";
+    if (typeof image === "string") return image;
+    if (typeof image === "object" && "url" in image && typeof (image as { url?: string }).url === "string") {
+      return (image as { url: string }).url;
+    }
+    return "/placeholder-product.jpg";
+  };
+
+  const getStockTextColor = (stock: number): string => {
+    if (stock <= 0) return "text-rose-600";
+    if (stock < 5) return "text-amber-600";
+    return "text-slate-900";
+  };
+
+  const getStockStatusBadge = (stock: number, isAvailable?: boolean) => {
+    if (stock <= 0) {
+      return {
+        text: "Out of Stock",
+        className: "bg-rose-50 text-rose-700 border-rose-200",
+      };
+    }
+    if (isAvailable && stock > 5) {
+      return {
+        text: "In Stock",
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      };
+    }
+    return {
+      text: "Low Stock",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  };
+
   return (
     <div>
       <div className="space-y-4 sm:space-y-5 max-w-full overflow-hidden">
@@ -119,13 +161,12 @@ export default function ProductsMainComp() {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 transition-all cursor-pointer ${
-                  selectedCategory === cat.id
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 transition-all cursor-pointer ${selectedCategory === cat.id
                     ? "bg-slate-900 text-white font-semibold"
                     : "bg-slate-100/70 text-slate-600 hover:bg-slate-100"
-                }`}
+                  }`}
               >
-                  {cat.name}
+                {cat.name}
               </button>
             ))}
           </div>
@@ -164,39 +205,49 @@ export default function ProductsMainComp() {
                       No products found.
                     </td>
                   </tr>
-                ) : filteredProducts.map((product, index) => (
-                  <tr key={`${product.title}-${index}`} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3 px-3 sm:px-4">
-                      <div className="flex items-center gap-2.5">
-                        <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                          <Image
-                            src={product.images?.[0].url || "/placeholder-product.jpg"}
-                            alt={product.title}
-                            fill
-                            sizes="48px"
-                            className="object-contain p-1"
-                          />
-                        </span>
-                        <div className="min-w-0">
-                          <span className="font-semibold text-slate-900 block leading-tight truncate max-w-[140px] sm:max-w-[200px]">
-                            {product.title}
-                          </span>
-                          <span className="text-[10px] text-slate-400">
-                            {product.unitType}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
+                ) : (
+                  filteredProducts.map((product, index) => {
+                    const category = categoryById.get(product.categoryId);
+                    const brand = brandById.get(product.brandId);
+                    const brandLogo = brand?.logo;
+                    const productImageSrc = getProductImageUrl(product.images?.[0]);
+                    const stockBadge = getStockStatusBadge(product.stock, product.isAvailable);
 
-                    <td className="py-3 px-3">
-                      {(() => {
-                        const category = categoryById.get(product.categoryId);
-                        return (
+                    return (
+                      <tr
+                        key={product.id || `${product.title}-${index}`}
+                        className="hover:bg-slate-50/60 transition-colors"
+                      >
+                        {/* Product Name & Image */}
+                        <td className="py-3 px-3 sm:px-4">
+                          <div className="flex items-center gap-2.5">
+                            <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                              <Image
+                                src={productImageSrc}
+                                alt={product.title}
+                                fill
+                                sizes="48px"
+                                className="object-contain p-1"
+                              />
+                            </span>
+                            <div className="min-w-0">
+                              <span className="font-semibold text-slate-900 block leading-tight truncate max-w-[140px] sm:max-w-[200px]">
+                                {product.title}
+                              </span>
+                              <span className="text-[10px] text-slate-400">
+                                {product.unitType}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3 px-3">
                           <div className="flex items-center gap-2">
                             {category?.logo ? (
                               <Image
                                 src={category.logo}
-                                alt=""
+                                alt={category.name || "Category logo"}
                                 width={50}
                                 height={50}
                                 className="size-7 rounded-lg object-cover border border-slate-200"
@@ -208,61 +259,53 @@ export default function ProductsMainComp() {
                               {category?.name || product.categoryId}
                             </span>
                           </div>
-                        );
-                      })()}
-                    </td>
-                    <td className="py-3 px-3 align-middle">
-                      {brandById.get(product.brandId)?.logo ? (
-                        <span className="flex size-9 items-center justify-center">
-                          <span className="flex size-8 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-                            <Image
-                              src={brandById.get(product.brandId)?.logo}
-                              alt=""
-                              width={32}
-                              height={32}
-                              className="size-full object-contain p-1"
-                            />
+                        </td>
+
+                        {/* Brand */}
+                        <td className="py-3 px-3 align-middle">
+                          {brandLogo ? (
+                            <span className="flex size-9 items-center justify-center">
+                              <span className="flex size-8 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                <Image
+                                  src={brandLogo}
+                                  alt={brand?.name || "Brand logo"}
+                                  width={32}
+                                  height={32}
+                                  className="size-full object-contain p-1"
+                                />
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="flex size-9 items-center justify-center">
+                              <span className="size-8 rounded-lg border border-slate-200 bg-slate-100" />
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Selling Price */}
+                        <td className="py-3 px-3 font-bold text-slate-900">
+                          ৳{product.sellingPrice.toLocaleString()}
+                        </td>
+
+                        {/* Stock */}
+                        <td className="py-3 px-3">
+                          <span className={`font-bold ${getStockTextColor(product.stock)}`}>
+                            {product.stock}
                           </span>
-                        </span>
-                      ) : (
-                        <span className="flex size-9 items-center justify-center">
-                          <span className="size-8 rounded-lg border border-slate-200 bg-slate-100" />
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 font-bold text-slate-900">
-                      ৳{product.sellingPrice.toLocaleString()}
-                    </td>
+                        </td>
 
-                    <td className="py-3 px-3">
-                      <span
-                        className={`font-bold ${
-                          product.stock <= 0
-                            ? "text-rose-600"
-                            : product.stock < 5
-                            ? "text-amber-600"
-                            : "text-slate-900"
-                        }`}
-                      >
-                        {product.stock}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <span
-                        className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
-                          product.isAvailable && product.stock > 5
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : product.stock > 0
-                            ? "bg-amber-50 text-amber-700 border-amber-200"
-                            : "bg-rose-50 text-rose-700 border-rose-200"
-                        }`}
-                      >
-                        {product.stock <= 0 ? "Out of Stock" : product.stock > 5 ? "In Stock" : "Low Stock"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        {/* Stock Badge */}
+                        <td className="py-3 px-3">
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${stockBadge.className}`}
+                          >
+                            {stockBadge.text}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

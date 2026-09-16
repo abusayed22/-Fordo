@@ -68,8 +68,8 @@ export function StoreCartProvider({ children }: { children: React.ReactNode }) {
         {
           product,
           quantity,
-          selectedSize: size || product.sizes[0] || "Standard",
-          selectedColor: color || product.colors[0] || "Standard",
+          selectedSize: size || product.sizes?.[0] || "Standard",
+          // selectedColor: color || product.colors[0] || "Standard",
         },
       ];
     });

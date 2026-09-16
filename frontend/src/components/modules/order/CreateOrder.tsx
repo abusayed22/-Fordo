@@ -209,7 +209,7 @@ export default function CreateOrder({ initialProducts }: Readonly<{ initialProdu
             form.setFieldValue("items", []);
             localStorage.removeItem(STORAGE_KEY);
 
-            await queryClient.invalidateQueries({ queryKey: ["manual-orders"] });
+            await queryClient.invalidateQueries({ queryKey: ["manual-orders"],exact: false });
             await queryClient.invalidateQueries({ queryKey: ["manual-order-products"] });
         },
         onError: (error: Error) => {

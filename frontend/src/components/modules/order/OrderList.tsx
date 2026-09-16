@@ -39,7 +39,7 @@ interface OrderListProps {
   userRole?: string;
 }
 
-export default function OrderList({ userRole = "ADMIN" }: OrderListProps) {
+export default function OrderList({ userRole }: OrderListProps) {
   const queryClient = useQueryClient();
 
   const normalizedRole = userRole?.toUpperCase() || "USER";
@@ -53,7 +53,7 @@ export default function OrderList({ userRole = "ADMIN" }: OrderListProps) {
   const [cancelError, setCancelError] = useState("");
 
   const { data: orderResponse, isLoading } = useQuery({
-    queryKey: ["admin-orders", { status: activeTab, search: searchQuery }],
+    queryKey: ["manual-orders", { status: activeTab, search: searchQuery }],
     queryFn: () =>
       getOrdersData({
         status: activeTab === "All" ? undefined : activeTab,
@@ -61,6 +61,7 @@ export default function OrderList({ userRole = "ADMIN" }: OrderListProps) {
         limit: 100,
       }),
     refetchOnWindowFocus: "always",
+    refetchOnMount: "always",
   });
 
   const { mutateAsync: updateStatus, isPending: isUpdating } = useMutation({

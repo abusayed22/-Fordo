@@ -255,29 +255,29 @@ export function ProductCreateForm({
       const formData = new FormData();
 
       formData.append(
-  "data",
-  JSON.stringify({
-    title: validValue.title,
-    description: validValue.description || undefined,
-    categoryId: validValue.categoryId,
-    brandId: validValue.brandId || undefined,
-    costPrice: Number(validValue.costPrice),
-    originalPrice: Number(validValue.originalPrice),
-    sellingPrice: Number(validValue.sellingPrice),
-    stock: Number(validValue.stock),
-    unitType: validValue.unitType, // ব্যাকএন্ড unitType ফিল্ড আশা করছে
-    unitValue: validValue.unitValue ? Number(validValue.unitValue) : undefined,
-    isDiscounted: validValue.isDiscounted,
-    discountType: validValue.isDiscounted ? validValue.discountType : undefined,
-    discountValue: validValue.isDiscounted ? Number(validValue.discountValue) : undefined,
-    discountExpires:
-      validValue.isDiscounted && validValue.discountExpires
-        ? new Date(validValue.discountExpires).toISOString()
-        : undefined,
-    supplierName: validValue.supplierName || undefined,
-    invoiceNo: validValue.invoiceNo || undefined,
-  })
-);
+        "data",
+        JSON.stringify({
+          title: validValue.title,
+          description: validValue.description || undefined,
+          categoryId: validValue.categoryId,
+          brandId: validValue.brandId || undefined,
+          costPrice: Number(validValue.costPrice),
+          originalPrice: Number(validValue.originalPrice),
+          sellingPrice: Number(validValue.sellingPrice),
+          stock: Number(validValue.stock),
+          unitType: validValue.unitType, // ব্যাকএন্ড unitType ফিল্ড আশা করছে
+          unitValue: validValue.unitValue ? Number(validValue.unitValue) : undefined,
+          isDiscounted: validValue.isDiscounted,
+          discountType: validValue.isDiscounted ? validValue.discountType : undefined,
+          discountValue: validValue.isDiscounted ? Number(validValue.discountValue) : undefined,
+          discountExpires:
+            validValue.isDiscounted && validValue.discountExpires
+              ? new Date(validValue.discountExpires).toISOString()
+              : undefined,
+          supplierName: validValue.supplierName || undefined,
+          invoiceNo: validValue.invoiceNo || undefined,
+        })
+      );
 
       formData.append("file", validValue.file);
 
@@ -650,39 +650,36 @@ export function ProductCreateForm({
         {/* Right Side: File Upload & Relationships */}
         <div className="lg:col-span-4 space-y-5">
           {/* File Upload (MultiPart 'file') handled via form.Field */}
-          <form.Field
-            name="file"
-            children={(field) => (
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Product Image (File) *
-                </h2>
-
+          <form.Field name="file">
+            {(field) => (
+              <div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
-                    const selected = e.target.files?.[0] ?? null;
-                    if (selected && !selected.type.startsWith("image/")) {
-                      setErrorMessage("Only image files are allowed!");
-                      return;
-                    }
-                    field.handleChange(selected);
-                    setImagePreview(selected ? URL.createObjectURL(selected) : "");
-                    setErrorMessage("");
-                  }}
                   className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    field.handleChange(file as unknown as File);
+                    setImagePreview(file ? URL.createObjectURL(file) : "");
+                  }}
                 />
 
                 {!imagePreview ? (
                   <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        fileInputRef.current?.click();
+                      }
+                    }}
                     className="border-2 border-dashed border-slate-200 hover:border-[#056D6E] rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50"
                   >
                     <Upload className="size-6 text-[#056D6E] mx-auto mb-2" />
                     <p className="text-xs font-bold text-slate-800">Select Image File</p>
-                    <p className="text-[10px] text-slate-400 mt-1">MultiPart: key = "file"</p>
+                    <p className="text-[10px] text-slate-400 mt-1">MultiPart: key = &quot;file&quot;</p>
                   </div>
                 ) : (
                   <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-square group">
@@ -690,10 +687,14 @@ export function ProductCreateForm({
                     <button
                       type="button"
                       onClick={() => {
-                        field.handleChange(null);
+                        field.handleChange(null as unknown as File);
                         setImagePreview("");
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = "";
+                        }
                       }}
                       className="absolute top-2 right-2 size-7 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md cursor-pointer hover:bg-rose-700"
+                      aria-label="Remove image"
                     >
                       <X className="size-4" />
                     </button>
@@ -701,7 +702,7 @@ export function ProductCreateForm({
                 )}
               </div>
             )}
-          />
+          </form.Field>
 
           {/* Relations: Category & Brand */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
@@ -728,12 +729,11 @@ export function ProductCreateForm({
               )}
             />
 
-            <form.Field
-              name="brandId"
-              children={(field) => (
+            <form.Field name="brandId">
+              {(field) => (
                 <RelationshipPicker
                   label="Brand"
-                  value={field.state.value}
+                  value={field.state.value ?? ""}
                   options={brands.map((brand) => ({
                     id: brand.id,
                     name: brand.name,
@@ -746,7 +746,7 @@ export function ProductCreateForm({
                   onChange={field.handleChange}
                 />
               )}
-            />
+            </form.Field>
           </div>
 
           {/* Submit Button */}

@@ -1,8 +1,12 @@
-"use server";
 import React from 'react'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import { getCategoriesData } from '@/services/categories.service';
 import CategoriesMainCom from '@/components/modules/categories/CategoriesMainCom';
+
+
+export const dynamic = "force-dynamic";
+
+
 
 async function page(
   {searchParams}:{

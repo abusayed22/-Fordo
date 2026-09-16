@@ -29,7 +29,7 @@ export default function CustomersPage() {
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.phone.includes(searchQuery) ||
       c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.district.toLowerCase().includes(searchQuery.toLowerCase())
+      c.district?.toLowerCase().includes(searchQuery.toLowerCase()) 
   );
 
   return (

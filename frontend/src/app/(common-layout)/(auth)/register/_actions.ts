@@ -20,7 +20,14 @@ export const registerAction = async (payload: IRegisterPayload): Promise<ApiResp
     }
     try {
         const response = await httpClient.post<IRegisterResponse>("/auth/registration", parsedPayload.data);
-        const { accessToken, refreshToken, token, user } = response.data;
+        const data = response.data
+        if (!data) {
+            return {
+                success: false,
+                message: "No login data received from server",
+            };
+        }
+        const { accessToken, refreshToken, token, user } = data;
 
         // await setTokenInCookie("accessToken", accessToken);
         // await setTokenInCookie("refreshToken", refreshToken);
