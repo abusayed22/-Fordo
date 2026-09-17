@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "make:module": "tsx scripts/makeModule.ts",
-    "type": "module",
     "start": "node --max-old-space-size=384 dist/server.js",
     "build": "tsc",
     "lint": "eslint ./src/**/*",
