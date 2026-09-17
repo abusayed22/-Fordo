@@ -6,7 +6,7 @@
   "scripts": {
     "make:module": "tsx scripts/makeModule.ts",
     "start": "npm start",
-    "build": "npm install && npx prisma generate && npm run build",
+    "build": "tsc",
     "lint": "eslint ./src/**/*",
     "migrate": "prisma migrate dev",
     "push": "prisma db push",
