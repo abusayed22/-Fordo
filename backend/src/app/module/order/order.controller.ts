@@ -4,7 +4,7 @@ import { OrderService } from "./order.service";
 
 const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req.user as any).userId;
+    const userId = (req.user).userId;
     const result = await OrderService.createOrder(req.body, userId);
 
     res.status(StatusCodes.CREATED).json({
@@ -20,7 +20,7 @@ const createOrder = async (req: Request, res: Response, next: NextFunction) => {
 
 const getOrders = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = req.user as any;
+    const user = req.user;
     const result = await OrderService.getOrders(req.query, user);
 
     res.status(StatusCodes.OK).json({
@@ -38,8 +38,8 @@ const getOrders = async (req: Request, res: Response, next: NextFunction) => {
 const getSingleOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const user = req.user as any;
-    const result = await OrderService.getSingleOrder(id, user);
+    const user = req.user ;
+    const result = await OrderService.getSingleOrder(String(id), user);
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -56,7 +56,7 @@ const updateOrderStatus = async (req: Request, res: Response, next: NextFunction
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const result = await OrderService.updateOrderStatus(id, status);
+    const result = await OrderService.updateOrderStatus(String(id), status);
 
     res.status(StatusCodes.OK).json({
       success: true,

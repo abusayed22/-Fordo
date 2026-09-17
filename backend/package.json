@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "make:module": "tsx scripts/makeModule.ts",
-    "start": "node dist/server.js",
-    "build": "tsc",
+    "start": "npm start",
+    "build": "npm install && npx prisma generate && npm run build",
     "lint": "eslint ./src/**/*",
     "migrate": "prisma migrate dev",
     "push": "prisma db push",

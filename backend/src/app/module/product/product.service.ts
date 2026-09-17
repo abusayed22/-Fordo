@@ -1,7 +1,6 @@
 import { extractPublicId } from "../../../config/cloudinary";
 import { Product } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
-import { IProduct } from "./product.constants";
 import { ICreateProductPayload, IUpdateProductPayload } from "./product.interface";
 import slugify from "slugify"
 
@@ -159,10 +158,9 @@ const productCreate = async (payload: ICreateProductPayload) => {
     createdById,
     supplierName,
     invoiceNo,
-    unitValue,
     unitType,
     ...restProductData
-  } = productData as IProduct;
+  } = productData as Product;
 
   const productCreatedData = await prisma.$transaction(async (tx) => {
     const product = await tx.product.create({
@@ -173,7 +171,7 @@ const productCreate = async (payload: ICreateProductPayload) => {
         originalPrice: Number(restProductData.originalPrice),
         sellingPrice: Number(restProductData.sellingPrice),
         stock: Number(restProductData.stock),
-        unitType: unitType || unit,
+        unitType: unitType,
         unitValue: restProductData.unitValue ? Number(restProductData.unitValue) : 1,
         isDiscounted: Boolean(restProductData.isDiscounted),
         discountType: restProductData.isDiscounted ? restProductData.discountType : undefined,
